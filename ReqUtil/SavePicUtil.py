@@ -19,17 +19,43 @@ class SavePicUtil:
         self.test_times = test_times
 
     def save_pic(self, url, save_dir, save_name, msg='', is_async=False, log=com_log):
+        """
+        保存图片
+        :param url: 图片url
+        :param save_dir: 保存目录
+        :param save_name: 保存图片名称
+        :param msg: 消息
+        :param is_async: 是否异步获取图片
+        :param log: 日志输出位置
+        :return: None
+        """
         places: List[Tuple[str, str]] = [(save_dir, save_name)]
         self.save_pic_multi_places(url, places, msg, is_async, log)
 
     def save_pic_multi_places(self, url, places: List[Tuple[str, str]], msg='', is_async=False, log=com_log):
+        """
+        保存图片到多个目录
+        :param url: 图片url
+        :param places: 保存的地点
+        :param msg: 消息
+        :param is_async: 是否异步获取图片
+        :param log: 日志输出位置
+        :return: None
+        """
         if is_async:
             threading.Thread(target=self.__get_then_save_pic, args=(url, places, msg, log)).start()
         else:
             self.__get_then_save_pic(url, places, msg, log)
 
     def __get_then_save_pic(self, url: str, places, msg, log):
-
+        """
+        获取然后保存图片
+        :param url: 图片url
+        :param places: 保存地点
+        :param msg: msg
+        :param log: 日志输出位置
+        :return: None
+        """
         invalid_url_list = []
         if url in invalid_url_list:
             log.warning(f"图片连接无效: url: {url}, msg: {msg}")
@@ -43,7 +69,6 @@ class SavePicUtil:
 
         # 图片获取失败, 尝试别的一些办法
         if not res:
-
             # 尝试替换https为http
             if url.startswith('https:'):
                 test_url = url.replace('https:', 'http:')
@@ -68,26 +93,33 @@ class SavePicUtil:
                           f"\n\turl:{url}"
                           f"{traceback.format_exc()}")
 
-    def try_get_pic_times(self, url, params=None, msg="", log=com_log):
+    def try_get_pic_times(self, url, msg="", log=com_log):
+        """
+        尝试获取图片多次
+        :param url: 图片url
+        :param msg:
+        :param log:
+        :return:
+        """
         for i in range(self.test_times):
             res = None
             try:
-                res = self.session.get(url=url, params=params)
+                res = self.session.get(url=url)
                 if res.status_code == 200:
-                    log.info(f"get图片成功: {msg}, url: {url}, params: {params}")
+                    log.info(f"get图片成功: {msg}, url: {url}")
                     return res
                 if i < self.test_times - 1:
                     log.warning(f"get图片响应错误: 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
-                                f"\n\turl: {url}, params: {params}")
+                                f"\n\turl: {url}")
                 else:
                     log.error(f"get图片响应错误!!! 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
-                              f"\n\turl: {url}, params: {params}")
+                              f"\n\turl: {url}")
             except Exception as e:
                 if i < self.test_times - 1:
                     log.warning(f"get图片出现异常: 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
                                 f"\n\t异常: {e}"
-                                f"\n\turl: {url}, params: {params}")
+                                f"\n\turl: {url}")
                 else:
                     log.error(f"get图片出现异常!!! 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
                               f"\n\t异常: {e}"
-                              f"\n\turl: {url}, params: {params}")
+                              f"\n\turl: {url}")
