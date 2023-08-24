@@ -15,7 +15,9 @@ class SavePicUtil:
             self.session = session
         else:
             self.session = requests.Session()
+            self.session.timeout = 25  # 设置超时时间为10秒
             self.session.mount('https://', requests.adapters.HTTPAdapter(pool_connections=15, pool_maxsize=240))
+            self.session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=15, pool_maxsize=240))
         self.test_times = test_times
 
     def save_pic(self, url, save_dir, save_name, msg='', is_async=False, log=com_log):
