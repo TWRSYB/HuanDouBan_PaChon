@@ -1,6 +1,7 @@
 import json
 import re
 import concurrent.futures
+import threading
 from os import makedirs
 from typing import List, Tuple, Dict
 
@@ -8,10 +9,9 @@ from lxml import etree
 
 from Config import StartPoint
 from Config.Config import URL_HOST, API_PATH_ACTOR_MOVIE, URL_HOST_API, PAGE_PATH_MOVIE, JSON_DATA_ISSUER, \
-    JSON_DATA_DIRECTOR, PIC_DIR_MOVIE_GALLERY_PIC_ID_FANHAO, PIC_DIR_MOVIE_GALLERY_PIC_FANHAO, \
-    PIC_DIR_MOVIE_COVER_PIC_ID_FANHAO, PIC_DIR_MOVIE_COVER_PIC_FANHAO, \
-    PIC_DIR_MOVIE_TRAILER_FANHAO, PIC_DIR_MOVIE_TRAILER_ID_FANHAO
-from Dao.ActorDao import ActorVo
+    JSON_DATA_DIRECTOR, PIC_DIR_MOVIE_GALLERY_PIC_ID_FANHAO, PIC_DIR_MOVIE_COVER_PIC_ID_FANHAO, \
+    PIC_DIR_MOVIE_TRAILER_ID_FANHAO, PIC_DIR_MOVIE_COVER_PIC_STUDIO_FANHAO, PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO, \
+    PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO
 from Dao.DirectorDao import DirectorVo, DirectorDao
 from Dao.IssuerDao import IssuerVo, IssuerDao
 from Dao.MagnetDao import MagnetVo, MagnetDao
@@ -32,6 +32,8 @@ set_issuer_id = set()
 set_director_id = set()
 set_series_id = set()
 
+# 创建一个互斥锁
+lock = threading.Lock()
 
 # def get_from_param_dict(param_key, param_dict):
 #     param_value = param_dict.get(param_key)
@@ -52,7 +54,6 @@ def get_movie_detail(dict_movie, log=com_log, movie_order=0) -> MovieVo:
                                      msg=f"获取影片页面 movie_order: {movie_order}, movie_vo: {movie_vo}",
                                      log=log)
     if res:
-
         # 解析 Vue js ↓↓↓
         etree_res = etree.HTML(res.text)
         script_text = etree_res.xpath("/html/body/script[not(@src)]/text()")[0].replace(r'\u002F', '/')
@@ -77,19 +78,14 @@ def get_movie_detail(dict_movie, log=com_log, movie_order=0) -> MovieVo:
         # 解析 xpath 影片信息 ↑↑↑
 
         # 获取影片时长和发行日期 ↓↓↓
-        span_cont_list = card_info.xpath("./li/span[@class='cont']/text()")
-        duration = ""
-        issue_date = ""
-        for span_cont in span_cont_list:
-            if span_cont.endswith('分钟'):
-                duration = span_cont
-                break
-        for span_cont in span_cont_list:
-            match = re.match(r"^.*(\d{4}-\d{2}-\d{2})$", span_cont)
-            if match:
-                issue_date = span_cont
-                break
+        duration = xpath_util.get_unique(element=card_info,
+                                         xpath="./li/span[@class='label' and text()='时长：']/../span[@class='cont']/text()"
+                                         ).strip()
 
+        issue_date = xpath_util.get_unique(element=card_info,
+                                           xpath="./li/span[@class='label' and text()='日期：']/../span["
+                                                 "@class='cont']/text()"
+                                           ).strip()
         # 获取影片时长和发行日期 ↑↑↑
 
         # 获取片商, 发行, 系列, 导演信息 ↓↓↓
@@ -101,8 +97,9 @@ def get_movie_detail(dict_movie, log=com_log, movie_order=0) -> MovieVo:
                                             xpath="./li/div/span/a[contains(@href,'director')]/text()")
         director_id = xpath_util.get_unique(element=card_info, xpath="./li/div/span/a[contains(@href,'director')]/@href"
                                             ).split('/')[-1]
-
-        issuer_nm = xpath_util.get_unique(element=card_info, xpath="./li/div/span[@class='cont']/text()")
+        issuer_nm = xpath_util.get_unique(element=card_info,
+                                          xpath="./li/div/span[@class='label' and text()='发行：']/../span[@class='cont']/text()"
+                                          ).strip()
 
         series_nm = xpath_util.get_unique(element=card_info, xpath="./li/div/span/a[contains(@href,'series')]/text()")
         series_id = xpath_util.get_unique(element=card_info, xpath="./li/div/span/a[contains(@href,'series')]/@href"
@@ -146,13 +143,15 @@ def get_movie_detail(dict_movie, log=com_log, movie_order=0) -> MovieVo:
         movie_vo.actors = actors
         movie_vo.actor_ids = actor_ids
 
+        log.info(f"获取到影片信息: {movie_vo}")
+
         # 为影片对象赋值并保存 ↑↑↑
 
         # 发行商入库 ↓↓↓
         if issuer_nm:
             if (studio_id, issuer_nm) not in set_issuer_id:
                 issuer_vo = IssuerVo(id_studio=studio_id, name=issuer_nm)
-                insert_result = issuer_dao.insert(issuer_vo)
+                insert_result = issuer_dao.insert(issuer_vo, log=log)
                 if insert_result == 1:
                     rcd_data_json.append_data_to_txt(txt_file=JSON_DATA_ISSUER, data=issuer_vo, msg="发行商", log=log)
                     set_issuer_id.add((studio_id, issuer_nm))
@@ -162,28 +161,29 @@ def get_movie_detail(dict_movie, log=com_log, movie_order=0) -> MovieVo:
         if director_id:
             if director_id not in set_director_id:
                 director_vo = DirectorVo(director_id, director_nm)
-                insert_result = director_dao.insert(director_vo)
+                insert_result = director_dao.insert(director_vo, log=log)
                 if insert_result == 1:
                     rcd_data_json.append_data_to_txt(txt_file=JSON_DATA_DIRECTOR, data=director_vo, msg="导演", log=log)
                     set_issuer_id.add((studio_id, issuer_nm))
         # 导演入库 ↑↑↑
 
         # 封面图保存 ↓↓↓
-        places: List[Tuple[str, str]] = [(PIC_DIR_MOVIE_COVER_PIC_ID_FANHAO, movie_vo.id),
-                                         (PIC_DIR_MOVIE_COVER_PIC_FANHAO, movie_vo.number)]
+        places: List[Tuple[str, str]] = [(PIC_DIR_MOVIE_COVER_PIC_ID_FANHAO, f"{movie_vo.id}_{movie_vo.number}"),
+                                         (PIC_DIR_MOVIE_COVER_PIC_STUDIO_FANHAO,
+                                          f"{movie_vo.studio_nm}_{movie_vo.number}")]
         if movie_vo.big_cove:
             save_pic_util.save_pic_multi_places(url=movie_vo.big_cove, places=places, msg=f"影片封面图大, 影片: {movie_vo}",
-                                                log=log)
+                                                log=save_pic_log, is_async=True)
         elif movie_vo.small_cover:
             save_pic_util.save_pic_multi_places(url=movie_vo.small_cover, places=places, msg=f"影片封面图小, 影片: {movie_vo}",
-                                                log=log)
+                                                log=save_pic_log, is_async=True)
         # 封面图保存 ↑↑↑
 
         # # 预告片保存 ↓↓↓
         # if trailer:
         #     places: List[Tuple[str, str]] = []
-        #     places.append((PIC_DIR_MOVIE_TRAILER_ID_FANHAO, movie_vo.id))
-        #     places.append((PIC_DIR_MOVIE_TRAILER_FANHAO, movie_vo.number))
+        #     places.append((PIC_DIR_MOVIE_TRAILER_ID_FANHAO, f"{movie_vo.id}_{movie_vo.number}"))
+        #     places.append((PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO, f"{movie_vo.studio_nm}_{movie_vo.number}"))
         #     if movie_vo.big_cove:
         #         save_pic_util.save_pic_multi_places(url=trailer, places=places,
         #                                             msg=f"影片预告片, 影片: {movie_vo}", log=log)
@@ -193,13 +193,13 @@ def get_movie_detail(dict_movie, log=com_log, movie_order=0) -> MovieVo:
         big_gallery_list = re.findall(r',big_img:"(.+?)"}', script_text)
         if big_gallery_list:
             dir_id_fanhao = f"{PIC_DIR_MOVIE_GALLERY_PIC_ID_FANHAO}/{movie_vo.id}_{movie_vo.number}"
-            dir_fanhao = f"{PIC_DIR_MOVIE_GALLERY_PIC_FANHAO}/{movie_vo.id}_{movie_vo.number}"
+            dir_studio_fanhao = f"{PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO}/{movie_vo.studio_nm}_{movie_vo.number}"
             makedirs(dir_id_fanhao, exist_ok=True)
-            makedirs(dir_fanhao, exist_ok=True)
+            makedirs(dir_studio_fanhao, exist_ok=True)
             for i, big_gallery in enumerate(big_gallery_list):
                 places: List[Tuple[str, str]] = [
                     (dir_id_fanhao, f"{movie_vo.id}_{movie_vo.number}_{str(i + 1).zfill(3)}"),
-                    (dir_fanhao, f"{movie_vo.number}_{str(i + 1).zfill(3)}")]
+                    (dir_studio_fanhao, f"{movie_vo.studio_nm}_{movie_vo.number}_{str(i + 1).zfill(3)}")]
                 save_pic_util.save_pic_multi_places(url=big_gallery, places=places,
                                                     msg=f"影片预览图, 影片: {movie_vo}", log=save_pic_log, is_async=True)
         # 预览图保存 ↑↑↑
@@ -226,40 +226,51 @@ def get_movie_detail(dict_movie, log=com_log, movie_order=0) -> MovieVo:
                                      name=magnet_name,
                                      url=magnet_url, time=magnet_time, size=magnet_size,
                                      file_num=magnet_file_num)
-                insert_result = magnet_dao.insert(magnet_vo)
+                insert_result = magnet_dao.insert(magnet_vo, log=log)
                 if insert_result == 1:
+                    # 在访问共享资源之前获取锁
+                    lock.acquire()
+                    # 访问共享资源
                     try:
                         rcd_data_json.json_file_magnet.write(f"{magnet_vo}\n")
                         log.info(f"json写入文件成功 magnet JSON: {magnet_vo}")
                     except Exception as e:
                         log.error(f"json写入文件出现异常 magnet JSON: {magnet_vo}"
                                   f"\n\t异常: {e}")
+                    # 完成操作后释放锁
+                    lock.release()
         # 保存磁力链接 ↑↑↑
-    insert_result = movie_dao.insert(movie_vo)
+    insert_result = movie_dao.insert(movie_vo, log=log)
     if insert_result == 1:
+        # 在访问共享资源之前获取锁
+        lock.acquire()
+        # 访问共享资源
         try:
             rcd_data_json.json_file_movie.write(f"{movie_vo}\n")
             log.info(f"json写入文件成功 movie JSON: {movie_vo}")
         except Exception as e:
             log.error(f"json写入文件出现异常 movie JSON: {movie_vo}"
                       f"\n\t异常: {e}")
+        # 完成操作后释放锁
+        lock.release()
+
     return movie_vo
 
 
 def get_movie_detail_async(args):
-    dict_movie, actor_vo, page_num, i = args
-    process_log.process4(f"获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_vo} Start")
-    movie_vo = get_movie_detail(dict_movie, log=async_log)
-    process_log.process4(f"获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_vo} End")
+    dict_movie, actor_id, page_num, i = args
+    process_log.process4(f"获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_id} Start")
+    movie_vo = get_movie_detail(dict_movie, log=async_log, movie_order=i + 1)
+    process_log.process4(f"获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_id} End")
     return movie_vo
 
 
-def get_actor_movie_page(actor_vo: ActorVo, page_num):
+def get_actor_movie_page(actor_id, page_num):
     movie_list: List = []
 
     data = {
         'filter': 9,  # 过滤: 0-全部, 1-有字幕, 2-可下载, 3-含短评  试了下,没有更多码值
-        'id': actor_vo.id,
+        'id': actor_id,
         'page': page_num,
         'pageSize': 50,
         'sort': "1",  # 排序: 1-发布日期, 2-磁链更新  试了下,没有更多码值
@@ -267,7 +278,7 @@ def get_actor_movie_page(actor_vo: ActorVo, page_num):
 
     }
     res = req_util.try_ajax_post_times(url=f"{URL_HOST_API}{API_PATH_ACTOR_MOVIE}", data=data,
-                                       msg=f"获取演员影片列表: 第{page_num}页 演员: {actor_vo}")
+                                       msg=f"获取演员影片列表: 第{page_num}页 演员: {actor_id}")
 
     if res:
         dict_res = json.loads(res.text)
@@ -275,14 +286,14 @@ def get_actor_movie_page(actor_vo: ActorVo, page_num):
         if dict_res.get('code') == 200:
             if str(dict_res.get('data').get('pageSize')) != '50':
                 com_log.error(f"获取演员影片列表, 响应的pageSize不是50: {dict_res}, 第{page_num}页 演员:"
-                              f" {actor_vo}")
+                              f" {actor_id}")
             # for i, dict_movie in enumerate(dict_res.get('data').get('list')):
             #     LogUtil.LOG_PROCESS_MOVIE_ORDER = i + 1
             #     if StartPoint.START_POINT_MOVIE_ORDER > 1:
-            #         process_log.process4(f"跳过 获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_vo}")
+            #         process_log.process4(f"跳过 获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_id}")
             #         StartPoint.START_POINT_MOVIE_ORDER -= 1
             #         continue
-            #     process_log.process4(f"获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_vo} Start")
+            #     process_log.process4(f"获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_id} Start")
             #     movie_vo = get_movie_detail(dict_movie)
             #     movie_list.append(movie_vo)
             #     process_log.process4(f"获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_vo} End")
@@ -290,7 +301,7 @@ def get_actor_movie_page(actor_vo: ActorVo, page_num):
             # 创建线程池, 异步多线程获取影片信息(整页开始)
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 # 开启多个线程获取影片详情
-                futures = [executor.submit(get_movie_detail_async, args=(dict_movie, actor_vo, page_num, i))
+                futures = [executor.submit(get_movie_detail_async, args=(dict_movie, actor_id, page_num, i))
                            for i, dict_movie in enumerate(dict_res.get('data').get('list'))]
             # 等待所有线程完成并获取结果
             for future in concurrent.futures.as_completed(futures):
@@ -299,30 +310,25 @@ def get_actor_movie_page(actor_vo: ActorVo, page_num):
     return movie_list
 
 
-def get_actor_movie(actor_vo: ActorVo):
+def get_actor_movie(actor_id):
     for i in range(1, 100):
         LogUtil.LOG_PROCESS_MOVIE_PAGE = i
         LogUtil.LOG_PROCESS_MOVIE_ORDER = 0
         if StartPoint.START_POINT_MOVIE_PAGE > 1:
-            process_log.process3(f"跳过 获取演员影片列表: 第{i}页 演员: {actor_vo}")
+            process_log.process3(f"跳过 获取演员影片列表: 第{i}页 演员: {actor_id}")
             StartPoint.START_POINT_MOVIE_PAGE -= 1
             continue
-        process_log.process3(f"获取演员影片列表: 第{i}页 演员: {actor_vo} Start")
-        movie_list = get_actor_movie_page(actor_vo, i)
-        com_log.info(f"获取演员影片列表完成: 第{i}页 演员: {actor_vo} 结果: {movie_list}")
-        process_log.process3(f"获取演员影片列表: 第{i}页 演员: {actor_vo} End")
+        process_log.process3(f"获取演员影片列表: 第{i}页 演员: {actor_id} Start")
+        movie_list = get_actor_movie_page(actor_id, i)
+        com_log.info(f"获取演员影片列表完成: 第{i}页 演员: {actor_id} 结果: {movie_list}")
+        process_log.process3(f"获取演员影片列表: 第{i}页 演员: {actor_id} End")
         if not movie_list:
             process_log.process3(f"获取演员影片列表第{i}页没有数据, 不再获取下一页了")
             break
 
 
 def test_get_actor_movie():
-    actor_dict = {"id": 1065, "name": "小川桃果",
-                  "photo": "https://wimg.9618599.com/resources//javdb_actor/avatar/47e49f088dad6c4dcdb37e8ee670b692.jpg",
-                  "sex": "♀", "social_accounts": "", "movie_sum": 181, "like_sum": 28, "alias": "三田百合子,横田まり"}
-
-    actor_vo: ActorVo = dict_to_obj2(ActorVo, actor_dict)
-    get_actor_movie(actor_vo)
+    get_actor_movie(1065)
 
 
 def test_get_movie_detail():
