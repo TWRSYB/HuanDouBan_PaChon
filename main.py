@@ -32,7 +32,6 @@ def get_actor_list_page(cid, page_num) -> List[ActorVo]:
                                       msg=f"获取演员列表: 第{page_num}页")
     if res:
         dict_res = json.loads(res.text)
-        print(dict_res)
 
         if dict_res.get('code') == 200:
             if str(dict_res.get('data').get('pageSize')) != '50':
@@ -76,7 +75,6 @@ def save_actor(actor_id, cid) -> ActorVo:
                                        msg=f"获取演员信息, 演员ID: {actor_id}")
     if res:
         dict_res = json.loads(res.text)
-        print(dict_res)
 
         if dict_res.get('code') == 200:
             dict_actor = dict_res.get('data')
@@ -103,7 +101,6 @@ def save_actor(actor_id, cid) -> ActorVo:
             if insert_result == 1:
                 rcd_data_json.add_data_to_json(json_file=JSON_DATA_ACTOR, data=actor_vo)
             elif isinstance(insert_result, Tuple):
-                print(insert_result)
                 actor_vo = ActorVo(*insert_result[0])
                 set_cid_for_vo(actor_vo, cid)
                 update_result = actor_dao.update_by_id(actor_vo)
@@ -173,7 +170,8 @@ def test_get_actor_list_page():
 
 if __name__ == '__main__':
     start_time = time.time()
-    start()
+    # start()
+    get_cid_data(1)
     # test_get_actor_list_page()
     end_time = time.time()
     duration = end_time - start_time
