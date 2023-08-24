@@ -137,7 +137,6 @@ class StrToContainer:
 
 def tran_dict_by_param_dict(the_dict: dict, param_dict):
     for key, value in the_dict.items():
-        print(key, type(value), value)
         if isinstance(value, str):
             if value and len(value) < 3:
                 if value in param_dict.keys():
