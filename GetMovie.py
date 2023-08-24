@@ -201,7 +201,7 @@ def get_movie_detail(dict_movie, log=com_log, movie_order=0) -> MovieVo:
                     (dir_id_fanhao, f"{movie_vo.id}_{movie_vo.number}_{str(i + 1).zfill(3)}"),
                     (dir_fanhao, f"{movie_vo.number}_{str(i + 1).zfill(3)}")]
                 save_pic_util.save_pic_multi_places(url=big_gallery, places=places,
-                                                    msg=f"影片预览图, 影片: {movie_vo}", log=save_pic_log)
+                                                    msg=f"影片预览图, 影片: {movie_vo}", log=save_pic_log, is_async=True)
         # 预览图保存 ↑↑↑
 
         # 保存磁力链接 ↓↓↓
