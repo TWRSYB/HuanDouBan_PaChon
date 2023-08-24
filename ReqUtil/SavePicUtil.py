@@ -60,10 +60,19 @@ class SavePicUtil:
         if url in invalid_url_list:
             log.warning(f"图片连接无效: url: {url}, msg: {msg}")
             return
-        if url.startswith('https://www.javbus.comhttps://i.imgur.com/'):
-            url = url.replace('https://www.javbus.comhttps://i.imgur.com/', 'https://i.imgur.com/')
+
+        # 如果url中再次嵌套了http(s)://, 则取嵌套的url
+        match_nest_http = re.match(r'http.+(http[s]?://.+)', url)
+        if match_nest_http:
+            log.warning(f"发现了嵌套url的情况: url: {url}")
+            url = match_nest_http.group(1)
+
+        # if url.startswith('https://www.javbus.comhttps://i.imgur.com/'):
+        #     url = url.replace('https://www.javbus.comhttps://i.imgur.com/', 'https://i.imgur.com/')
         if url.endswith('.jpg?75'):
             url = url.replace('.jpg?75', '.jpg')
+        if url.endswith('.jpg?71'):
+            url = url.replace('.jpg?71', '.jpg')
 
         res = self.try_get_pic_times(url=url, msg=msg, log=log)
 
