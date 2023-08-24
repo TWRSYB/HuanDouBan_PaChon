@@ -15,7 +15,7 @@ class ReqUtil:
             self.session = requests.Session()
             self.session.headers = HEADERS
             self.session.timeout = 10  # 设置超时时间为10秒
-            self.session.mount('https://', requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=50))
+            self.session.mount('https://', requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=60))
         self.test_times = test_times
 
     def try_get_req_times(self, url, params=None, msg="", log=com_log):
