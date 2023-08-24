@@ -2,11 +2,11 @@
 OUTPUT_DIR = 'D:/10.temp/06.黄豆瓣数据爬取/01.TEMP'
 PIC_DIR_ACTOR_AVATAR = f"{OUTPUT_DIR}/images/Actor_avatar"
 PIC_DIR_MOVIE_COVER_PIC_ID_FANHAO = f"{OUTPUT_DIR}/images/Movie_cover_pic_id_fanhao"
-PIC_DIR_MOVIE_COVER_PIC_FANHAO = f"{OUTPUT_DIR}/images/Movie_cover_pic_fanhao"
+PIC_DIR_MOVIE_COVER_PIC_STUDIO_FANHAO = f"{OUTPUT_DIR}/images/Movie_cover_pic_studio_fanhao"
 PIC_DIR_MOVIE_GALLERY_PIC_ID_FANHAO = f"{OUTPUT_DIR}/images/Movie_gallery_pic_id_fanhao"
-PIC_DIR_MOVIE_GALLERY_PIC_FANHAO = f"{OUTPUT_DIR}/images/Movie_gallery_pic_fanhao"
+PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO = f"{OUTPUT_DIR}/images/Movie_gallery_pic_studio_fanhao"
 PIC_DIR_MOVIE_TRAILER_ID_FANHAO = f"{OUTPUT_DIR}/images/Movie_trailer_id_fanhao"
-PIC_DIR_MOVIE_TRAILER_FANHAO = f"{OUTPUT_DIR}/images/Movie_trailer_fanhao"
+PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO = f"{OUTPUT_DIR}/images/Movie_trailer_studio_fanhao"
 
 # JSON_DATA的存储路径
 JSON_DATA_STUDIO = f"{OUTPUT_DIR}/jsondatas/studio.json"
