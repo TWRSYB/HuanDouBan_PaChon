@@ -193,7 +193,10 @@ def get_movie_detail(dict_movie, log=com_log, movie_order=0) -> MovieVo:
         big_gallery_list = re.findall(r',big_img:"(.+?)"}', script_text)
         if big_gallery_list:
             dir_id_fanhao = f"{PIC_DIR_MOVIE_GALLERY_PIC_ID_FANHAO}/{movie_vo.id}_{movie_vo.number}"
-            dir_studio_fanhao = f"{PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO}/{movie_vo.studio_nm}_{movie_vo.number}"
+            chars_cant_in_filename = r'[\\/:"*?<>|]+'
+            dir_studio_fanhao = f"{PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO}" \
+                                f"/{re.sub(chars_cant_in_filename, '-', str(movie_vo.studio_nm))}" \
+                                f"_{movie_vo.number}"
             makedirs(dir_id_fanhao, exist_ok=True)
             makedirs(dir_studio_fanhao, exist_ok=True)
             for i, big_gallery in enumerate(big_gallery_list):
