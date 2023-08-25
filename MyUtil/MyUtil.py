@@ -1,4 +1,5 @@
 import inspect
+import re
 import threading
 
 
@@ -9,8 +10,7 @@ class MyThread(threading.Thread):
         self.args = args
 
     def run(self):
-        self.result = self.func(*self.args)  # 在执行函数的同时，把结果赋值给result,
-        # 然后通过get_result函数获取返回的结果
+        self.result = self.func(*self.args)  # 在执行函数的同时，把结果赋值给result,  # 然后通过get_result函数获取返回的结果
 
     def get_result(self):
         try:
@@ -42,3 +42,7 @@ def create_empty_obj(cls):
     args = [None] * (len(sig.parameters))
     entity = cls(*args)
     return entity
+
+
+def filename_rm_invalid_chars(filename):
+    return re.sub(r'[\\/:"*?<>|]+', '-', filename)
