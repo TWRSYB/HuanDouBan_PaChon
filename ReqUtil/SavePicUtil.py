@@ -71,10 +71,10 @@ class SavePicUtil:
 
         # if url.startswith('https://www.javbus.comhttps://i.imgur.com/'):
         #     url = url.replace('https://www.javbus.comhttps://i.imgur.com/', 'https://i.imgur.com/')
-        if url.endswith('.jpg?75'):
-            url = url.replace('.jpg?75', '.jpg')
-        if url.endswith('.jpg?71'):
-            url = url.replace('.jpg?71', '.jpg')
+        match_invalid_subfix = re.match(r'(.+\.jpg)\?\d+$', url)
+        if match_invalid_subfix:
+            log.warning(f"发现了url以.jpg?xx结尾的情况: url: {url}")
+            url = match_invalid_subfix.group(1)
 
         res = self.try_get_pic_times(url=url, msg=msg, log=log)
 
