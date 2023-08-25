@@ -118,7 +118,7 @@ def save_actor(actor_id, cid) -> ActorVo:
 
             # 获取演员影片信息 ↓↓↓
             if cid in [2, 3, 4, 10]:
-                get_actor_movie(actor_vo)
+                get_actor_movie(actor_vo.id)
             # 获取演员影片信息 ↑↑↑
     return actor_vo
 
@@ -171,7 +171,7 @@ def test_get_actor_list_page():
 if __name__ == '__main__':
     start_time = time.time()
     # start()
-    get_cid_data(1)
+    get_cid_data(3)
     # test_get_actor_list_page()
     end_time = time.time()
     duration = end_time - start_time
