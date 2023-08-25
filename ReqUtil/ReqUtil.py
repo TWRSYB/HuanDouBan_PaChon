@@ -88,11 +88,11 @@ class ReqUtil:
                     else:
                         if i < self.test_times - 1:
                             log.warning(f"ajax post请求成功, 但接口响应错误: 第{i + 1}次 msg: {msg}"
-                                        f" {f'dict_res: {dict_res}' if res else ''}"
+                                        f"\n\t{f'dict_res: {dict_res}' if res else ''}"
                                         f"\n\turl: {url}, params: {params}, data: {data}")
                         else:
                             log.error(f"ajax post请求成功, 但接口响应错误!!! 第{i + 1}次 msg: {msg}"
-                                      f" {f'dict_res: {dict_res}' if res else ''}"
+                                      f"\n\t{f'dict_res: {dict_res}' if res else ''}"
                                       f"\n\turl: {url}, params: {params}, data: {data}")
                 if i < self.test_times - 1:
                     log.warning(f"ajax post请求响应错误: 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
