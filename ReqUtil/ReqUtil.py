@@ -1,10 +1,13 @@
 import json
+import traceback
 
 import requests
 from requests import Session
 
-from Config.Config import HEADERS
+from Config.Config import HEADERS, OUTPUT_DIR
 from LogUtil.LogUtil import com_log
+from MyUtil.MyUtil import filename_rm_invalid_chars
+from MyUtil.RcdDataJson import rcd_data_json
 
 
 class ReqUtil:
@@ -52,14 +55,18 @@ class ReqUtil:
                 if res.status_code == 200:
                     dict_res = json.loads(res.text)
                     if dict_res.get('code') == 200:
+                        rcd_data_json.append_data_to_txt(
+                            txt_file=f"{OUTPUT_DIR}/jsondatas/ajax_get_{filename_rm_invalid_chars(url)}.txt",
+                            data={'params': params, 'dict_res': dict_res}, msg="ajax_get_接口响应成功", log=log)
                         log.info(
                             f"ajax get请求成功: {msg}, url: {url}, params: {params}"
                             f" {f'code: {res.status_code}' if res else ''}")
                         return res
                     else:
                         if i < self.test_times - 1:
-                            log.warning(f"ajax get请求响应错误: 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
-                                        f"\n\turl: {url}, params: {params}")
+                            log.warning(
+                                f"ajax get请求响应错误: 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                                f"\n\turl: {url}, params: {params}")
                         else:
                             log.error(f"ajax get请求响应错误!!! 第{i + 1}次 msg: {msg}"
                                       f"\n\turl: {url}, params: {params}")
@@ -71,8 +78,9 @@ class ReqUtil:
                 else:
                     log.error(f"ajax get请求出现异常!!! 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
                               f"\n\t异常: {e}"
-                              f"\n\turl: {url}, params: {params}")
-                    
+                              f"\n\turl: {url}, params: {params}"
+                              f"{traceback.format_exc()}")
+
     def try_ajax_post_times(self, url, params=None, data=None, msg="", log=com_log):
         for i in range(self.test_times):
             res = None
@@ -80,6 +88,10 @@ class ReqUtil:
                 res = self.session.post(url=url, params=params, data=data)
                 if res.status_code == 200:
                     dict_res = json.loads(res.text)
+                    rcd_data_json.append_data_to_txt(
+                        txt_file=f"{OUTPUT_DIR}/jsondatas/ajax_post_{filename_rm_invalid_chars(url)}.txt",
+                        data={'params': params, 'data': data, 'dict_res': dict_res}, msg="ajax_post_接口响应成功", log=log
+                    )
                     if dict_res.get('code') == 200:
                         log.info(
                             f"ajax post请求成功: {msg}, url: {url}, params: {params}, data: {data},"

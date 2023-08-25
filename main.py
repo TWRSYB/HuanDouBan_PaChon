@@ -171,7 +171,7 @@ def test_get_actor_list_page():
 if __name__ == '__main__':
     start_time = time.time()
     # start()
-    get_cid_data(3)
+    get_cid_data(4)
     # test_get_actor_list_page()
     end_time = time.time()
     duration = end_time - start_time
