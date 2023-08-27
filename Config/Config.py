@@ -1,11 +1,11 @@
 # 爬虫输出目录
 OUTPUT_DIR = 'D:/10.temp/06.黄豆瓣数据爬取/01.TEMP'
 PIC_DIR_ACTOR_AVATAR = f"{OUTPUT_DIR}/images/Actor_avatar"
-PIC_DIR_MOVIE_COVER_PIC_ID_FANHAO = f"{OUTPUT_DIR}/images/Movie_cover_pic_id_fanhao"
+# PIC_DIR_MOVIE_COVER_PIC_ID_FANHAO = f"{OUTPUT_DIR}/images/Movie_cover_pic_id_fanhao"
 PIC_DIR_MOVIE_COVER_PIC_STUDIO_FANHAO = f"{OUTPUT_DIR}/images/Movie_cover_pic_studio_fanhao"
-PIC_DIR_MOVIE_GALLERY_PIC_ID_FANHAO = f"{OUTPUT_DIR}/images/Movie_gallery_pic_id_fanhao"
+# PIC_DIR_MOVIE_GALLERY_PIC_ID_FANHAO = f"{OUTPUT_DIR}/images/Movie_gallery_pic_id_fanhao"
 PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO = f"{OUTPUT_DIR}/images/Movie_gallery_pic_studio_fanhao"
-PIC_DIR_MOVIE_TRAILER_ID_FANHAO = f"{OUTPUT_DIR}/images/Movie_trailer_id_fanhao"
+# PIC_DIR_MOVIE_TRAILER_ID_FANHAO = f"{OUTPUT_DIR}/images/Movie_trailer_id_fanhao"
 PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO = f"{OUTPUT_DIR}/images/Movie_trailer_studio_fanhao"
 
 # JSON_DATA的存储路径
@@ -31,48 +31,13 @@ API_PATH_LABEL_LIST = '/api/label/list'
 API_PATH_SERIES_LIST = '/api/movie/attributes/series/list'
 
 
-
-
-# HEADERS = {
-#     # 'Accept':'application/json, text/plain, */*',
-#     # 'Accept-Language':'zh-CN,zh;q=0.9',
-#     # 'Content-Length':'60',
-#     # 'Content-Type':'application/json',
-#     # 'Origin':'https://xultka.com',
-#     # 'Sec-Ch-Ua':'"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"',
-#     # 'Sec-Ch-Ua-Mobile':'?0',
-#     # 'Sec-Ch-Ua-Platform':'"Windows"',
-#     # 'Sec-Fetch-Dest':'empty',
-#     # 'Sec-Fetch-Mode':'cors',
-#     # 'Sec-Fetch-Site':'cross-site',
-#     # 'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
-#     # 'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-#     # 'Cache-Control':'max-age=0',
-#     'Cookie':'promo_shown=1; __snaker__id=fFi8TF1UOQBJDIuF; __51cke__=; limited=pass; actor=%7B%22currentSecondaryIndex%22%3A2%2C%22currentCrumbsLabel%22%3A%22%E6%97%A0%E7%A0%81%22%2C%22query%22%3A%7B%22cid%22%3A2%2C%22page%22%3A1%2C%22pageSize%22%3A21%7D%7D; __tins__21256849=%7B%22sid%22%3A%201692619326787%2C%20%22vd%22%3A%201%2C%20%22expires%22%3A%201692621126787%7D; __51laig__=3',
-#
-#     # 'Sec-Fetch-Dest':'document',
-#     # 'Sec-Fetch-Mode':'navigate',
-#     # 'Sec-Fetch-Site':'same-origin',
-#     # 'Sec-Fetch-User':'?1',
-#     # 'Upgrade-Insecure-Requests':'1',
-#
-# }
 HEADERS = {
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9,application/json, text/plain, */*',
     'accept-language': 'zh-CN,zh;q=0.9',
     'cache-control': 'no-cache',
     'cookie': 'promo_shown=1; __snaker__id=AVspqKKElWMVtrtU; __51cke__=; limited=pass; promo_shown=1; __snaker__id=yfhMSHt1lNwkJmYo; studios=%7B%22currentSecondaryIndex%22%3A2%2C%22currentCrumbsLabel%22%3A%22%E6%97%A0%E7%A0%81%22%2C%22query%22%3A%7B%22cid%22%3A2%2C%22page%22%3A1%2C%22pageSize%22%3A20%7D%7D; actor=%7B%22currentSecondaryIndex%22%3A2%2C%22currentCrumbsLabel%22%3A%22%E6%97%A0%E7%A0%81%22%2C%22query%22%3A%7B%22cid%22%3A2%2C%22page%22%3A1%2C%22pageSize%22%3A21%7D%7D; __tins__21256849=%7B%22sid%22%3A%201692674428696%2C%20%22vd%22%3A%206%2C%20%22expires%22%3A%201692677092486%7D; __51laig__=207',
     'pragma': 'no-cache',
-    # 'sec-fetch-dest': 'document',
-    # 'sec-fetch-mode': 'navigate',
-    # 'sec-fetch-site': 'same-origin',
-    # 'sec-fetch-user': '?1',
-    # 'upgrade-insecure-requests': '1',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-
-
-    # 'content-length': '61',
-    # 'content-type': 'application/json',
     'origin': 'https://xultka.com',
     'sec-ch-ua': '"Chromium";v="109", "Not_A Brand";v="99"',
     'sec-ch-ua-mobile': '?0',
