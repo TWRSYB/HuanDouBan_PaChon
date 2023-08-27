@@ -1,12 +1,4 @@
-# import os
-#
-# dir_path = r'D:\10.temp\06.黄豆瓣数据爬取\01.TEMP\images\Movie_gallery_pic_studio_fanhao'
-#
-# for entry in os.scandir(dir_path):
-#     print(entry)
-#
 import os
-import shutil
 
 
 def rename_and_move_folders(directory):
@@ -22,6 +14,7 @@ def rename_and_move_folders(directory):
             folders_with_sub_folders.append(folder)
 
     print(f"共有{len(folders_with_sub_folders)}个文件夹包含子文件夹")
+    print(folders_with_sub_folders)
 
     for folder in folders_with_sub_folders:
         print(
@@ -55,5 +48,5 @@ def rename_and_move_folders(directory):
 
 
 # 调用函数并传入目录路径
-directory_path = r'D:\10.temp\06.黄豆瓣数据爬取\10.19_cid2\images\Movie_gallery_pic_studio_fanhao'
+directory_path = r'D:\10.temp\06.黄豆瓣数据爬取\01.TEMP\images\Movie_gallery_pic_studio_fanhao'
 rename_and_move_folders(directory_path)
