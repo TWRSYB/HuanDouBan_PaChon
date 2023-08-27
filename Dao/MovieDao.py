@@ -103,5 +103,27 @@ class MovieDao(ComDao):
                        vo.evaluators_num, vo.labels, vo.label_ids, vo.actors, vo.actor_ids]
         return self.try_insert(insert_sql, insert_data, vo, log)
 
+    def select_with_condition(self, where, order_by = "", limit="", args=None):
+        select_sql = f"""
+                SELECT 
+                    id, name, `number`, 
+                    release_time, created_at, 
+                    is_download, is_subtitle, is_short_comment, is_hot, is_new_comment, is_flux_linkage, 
+                    comment_num, score, small_cover, big_cove, 
+                    `time`, trailer, 
+                    duration, issue_date, 
+                    studio_nm, studio_id, director_nm, director_id, issuer_nm, series_nm, series_id, 
+                    evaluators_num, labels, label_ids, actors, actor_ids
+                FROM huandouban.movie
+            """
+        where = where
+        order_by = order_by
+        limit = limit
+        args = args
+        cursor = self.conn.cursor()
+        cursor.execute(f"{select_sql}\n{where} \n{order_by} \n{limit}", args=args)
+        fetchall = cursor.fetchall()
+        return fetchall
+
     def get_data_id(self, vo):
         return [vo.id]
