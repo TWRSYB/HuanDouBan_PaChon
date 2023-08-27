@@ -9,8 +9,7 @@ from lxml import etree
 
 from Config import StartPoint
 from Config.Config import URL_HOST, API_PATH_ACTOR_MOVIE, URL_HOST_API, PAGE_PATH_MOVIE, JSON_DATA_ISSUER, \
-    JSON_DATA_DIRECTOR, PIC_DIR_MOVIE_GALLERY_PIC_ID_FANHAO, PIC_DIR_MOVIE_COVER_PIC_ID_FANHAO, \
-    PIC_DIR_MOVIE_TRAILER_ID_FANHAO, PIC_DIR_MOVIE_COVER_PIC_STUDIO_FANHAO, PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO, \
+    JSON_DATA_DIRECTOR, PIC_DIR_MOVIE_COVER_PIC_STUDIO_FANHAO, PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO, \
     PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO
 from Dao.DirectorDao import DirectorVo, DirectorDao
 from Dao.IssuerDao import IssuerVo, IssuerDao
@@ -18,7 +17,7 @@ from Dao.MagnetDao import MagnetVo, MagnetDao
 from Dao.MovieDao import MovieVo, MovieDao
 from LogUtil import LogUtil
 from LogUtil.LogUtil import com_log, process_log, async_log, save_pic_log
-from MyUtil.MyUtil import dict_to_obj2
+from MyUtil.MyUtil import dict_to_obj2, filename_rm_invalid_chars
 from MyUtil.RcdDataJson import rcd_data_json
 from MyUtil.StrToContainerUtil import StrToContainer, tran_dict_by_param_dict
 from MyUtil.XpathUtil import xpath_util
@@ -168,41 +167,35 @@ def get_movie_detail(dict_movie, log=com_log, movie_order=0) -> MovieVo:
         # 导演入库 ↑↑↑
 
         # 封面图保存 ↓↓↓
-        places: List[Tuple[str, str]] = [(PIC_DIR_MOVIE_COVER_PIC_ID_FANHAO, f"{movie_vo.id}_{movie_vo.number}"),
-                                         (PIC_DIR_MOVIE_COVER_PIC_STUDIO_FANHAO,
-                                          f"{movie_vo.studio_nm}_{movie_vo.number}")]
-        if movie_vo.big_cove:
-            save_pic_util.save_pic_multi_places(url=movie_vo.big_cove, places=places, msg=f"影片封面图大, 影片: {movie_vo}",
-                                                log=save_pic_log, is_async=True)
-        elif movie_vo.small_cover:
-            save_pic_util.save_pic_multi_places(url=movie_vo.small_cover, places=places, msg=f"影片封面图小, 影片: {movie_vo}",
-                                                log=save_pic_log, is_async=True)
+        if movie_vo.big_cove or movie_vo.small_cover:
+            dir_cover_studio = f"{PIC_DIR_MOVIE_COVER_PIC_STUDIO_FANHAO}/{filename_rm_invalid_chars(movie_vo.studio_nm)}"
+            makedirs(dir_cover_studio, exist_ok=True)
+            places: List[Tuple[str, str]] = [(dir_cover_studio, f"{movie_vo.studio_nm}_{movie_vo.number}")]
+            if movie_vo.big_cove:
+                save_pic_util.save_pic_multi_places(url=movie_vo.big_cove, places=places, msg=f"影片封面图大, 影片: {movie_vo}",
+                                                    log=save_pic_log, is_async=True)
+            elif movie_vo.small_cover:
+                save_pic_util.save_pic_multi_places(url=movie_vo.small_cover, places=places, msg=f"影片封面图小, 影片: {movie_vo}",
+                                                    log=save_pic_log, is_async=True)
         # 封面图保存 ↑↑↑
 
-        # # 预告片保存 ↓↓↓
-        # if trailer:
-        #     places: List[Tuple[str, str]] = []
-        #     places.append((PIC_DIR_MOVIE_TRAILER_ID_FANHAO, f"{movie_vo.id}_{movie_vo.number}"))
-        #     places.append((PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO, f"{movie_vo.studio_nm}_{movie_vo.number}"))
-        #     if movie_vo.big_cove:
-        #         save_pic_util.save_pic_multi_places(url=trailer, places=places,
-        #                                             msg=f"影片预告片, 影片: {movie_vo}", log=log)
-        # # 预告片保存 ↑↑↑
+        # 预告片保存 ↓↓↓
+        if trailer:
+            dir_trailer_studio = f"{PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO}/{filename_rm_invalid_chars(movie_vo.studio_nm)}"
+            makedirs(dir_trailer_studio, exist_ok=True)
+            places: List[Tuple[str, str]] = [(dir_trailer_studio, f"{movie_vo.studio_nm}_{movie_vo.number}")]
+            if movie_vo.big_cove:
+                save_pic_util.save_pic_multi_places(url=trailer, places=places,
+                                                    msg=f"影片预告片, 影片: {movie_vo}", log=log, is_async=True)
+        # 预告片保存 ↑↑↑
 
         # 预览图保存 ↓↓↓
         big_gallery_list = re.findall(r',big_img:"(.+?)"}', script_text)
         if big_gallery_list:
-            dir_id_fanhao = f"{PIC_DIR_MOVIE_GALLERY_PIC_ID_FANHAO}/{movie_vo.id}_{movie_vo.number}"
-            chars_cant_in_filename = r'[\\/:"*?<>|]+'
-            dir_studio_fanhao = f"{PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO}" \
-                                f"/{re.sub(chars_cant_in_filename, '-', str(movie_vo.studio_nm))}" \
-                                f"_{movie_vo.number}"
-            makedirs(dir_id_fanhao, exist_ok=True)
-            makedirs(dir_studio_fanhao, exist_ok=True)
+            dir_gallery_studio_fanhao = f"{PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO}/{filename_rm_invalid_chars(movie_vo.studio_nm)}/{filename_rm_invalid_chars(movie_vo.number)}"
+            makedirs(dir_gallery_studio_fanhao, exist_ok=True)
             for i, big_gallery in enumerate(big_gallery_list):
-                places: List[Tuple[str, str]] = [
-                    (dir_id_fanhao, f"{movie_vo.id}_{movie_vo.number}_{str(i + 1).zfill(3)}"),
-                    (dir_studio_fanhao, f"{movie_vo.studio_nm}_{movie_vo.number}_{str(i + 1).zfill(3)}")]
+                places: List[Tuple[str, str]] = [(dir_gallery_studio_fanhao, f"{movie_vo.number}_{str(i + 1).zfill(3)}")]
                 save_pic_util.save_pic_multi_places(url=big_gallery, places=places,
                                                     msg=f"影片预览图, 影片: {movie_vo}", log=save_pic_log, is_async=True)
         # 预览图保存 ↑↑↑
