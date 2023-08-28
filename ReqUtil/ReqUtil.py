@@ -29,21 +29,21 @@ class ReqUtil:
                 res = self.session.get(url=url, params=params)
                 if res.status_code == 200:
                     log.info(
-                        f"get请求成功: {msg}, url: {url}, params: {params} {f'code: {res.status_code}' if res else ''}")
+                        f"get请求成功: {msg}, url: {url}, params: {params} res: {res}")
                     return res
                 if i < self.test_times - 1:
-                    log.warning(f"get请求响应错误: 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                    log.warning(f"get请求响应错误: 第{i + 1}次 msg: {msg} res: {res}"
                                 f"\n\turl: {url}, params: {params}")
                 else:
                     log.error(f"get请求响应错误!!! 第{i + 1}次 msg: {msg}"
                               f"\n\turl: {url}, params: {params}")
             except Exception as e:
                 if i < self.test_times - 1:
-                    log.warning(f"get请求出现异常: 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                    log.warning(f"get请求出现异常: 第{i + 1}次 msg: {msg} res: {res}"
                                 f"\n\t异常: {e}"
                                 f"\n\turl: {url}, params: {params}")
                 else:
-                    log.error(f"get请求出现异常!!! 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                    log.error(f"get请求出现异常!!! 第{i + 1}次 msg: {msg} res: {res}"
                               f"\n\t异常: {e}"
                               f"\n\turl: {url}, params: {params}")
 
@@ -60,23 +60,23 @@ class ReqUtil:
                             data={'params': params, 'dict_res': dict_res}, msg="ajax_get_接口响应成功", log=log)
                         log.info(
                             f"ajax get请求成功: {msg}, url: {url}, params: {params}"
-                            f" {f'code: {res.status_code}' if res else ''}")
+                            f" res: {res}")
                         return res
                     else:
                         if i < self.test_times - 1:
                             log.warning(
-                                f"ajax get请求响应错误: 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                                f"ajax get请求响应错误: 第{i + 1}次 msg: {msg} res: {res}"
                                 f"\n\turl: {url}, params: {params}")
                         else:
                             log.error(f"ajax get请求响应错误!!! 第{i + 1}次 msg: {msg}"
                                       f"\n\turl: {url}, params: {params}")
             except Exception as e:
                 if i < self.test_times - 1:
-                    log.warning(f"ajax get请求出现异常: 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                    log.warning(f"ajax get请求出现异常: 第{i + 1}次 msg: {msg} res: {res}"
                                 f"\n\t异常: {e}"
                                 f"\n\turl: {url}, params: {params}")
                 else:
-                    log.error(f"ajax get请求出现异常!!! 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                    log.error(f"ajax get请求出现异常!!! 第{i + 1}次 msg: {msg} res: {res}"
                               f"\n\t异常: {e}"
                               f"\n\turl: {url}, params: {params}"
                               f"{traceback.format_exc()}")
@@ -95,7 +95,7 @@ class ReqUtil:
                     if dict_res.get('code') == 200:
                         log.info(
                             f"ajax post请求成功: {msg}, url: {url}, params: {params}, data: {data},"
-                            f" {f'code: {res.status_code}' if res else ''}")
+                            f" res: {res}")
                         return res
                     else:
                         if i < self.test_times - 1:
@@ -107,18 +107,18 @@ class ReqUtil:
                                       f"\n\t{f'dict_res: {dict_res}' if res else ''}"
                                       f"\n\turl: {url}, params: {params}, data: {data}")
                 if i < self.test_times - 1:
-                    log.warning(f"ajax post请求响应错误: 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                    log.warning(f"ajax post请求响应错误: 第{i + 1}次 msg: {msg} res: {res}"
                                 f"\n\turl: {url}, params: {params}, data: {data}")
                 else:
                     log.error(f"ajax post请求响应错误!!! 第{i + 1}次 msg: {msg}"
                               f"\n\turl: {url}, params: {params}, data: {data}")
             except Exception as e:
                 if i < self.test_times - 1:
-                    log.warning(f"ajax post请求出现异常: 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                    log.warning(f"ajax post请求出现异常: 第{i + 1}次 msg: {msg} res: {res}"
                                 f"\n\t异常: {e}"
                                 f"\n\turl: {url}, params: {params}, data: {data}")
                 else:
-                    log.error(f"ajax post请求出现异常!!! 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                    log.error(f"ajax post请求出现异常!!! 第{i + 1}次 msg: {msg} res: {res}"
                               f"\n\t异常: {e}"
                               f"\n\turl: {url}, params: {params}, data: {data}")
 
@@ -127,12 +127,12 @@ class ReqUtil:
         try:
             res = self.session.get(url=url, params=params)
             if res.status_code == 200:
-                log.info(f"get请求成功: {msg}, url: {url}, params: {params} {f'code: {res.status_code}' if res else ''}")
+                log.info(f"get请求成功: {msg}, url: {url}, params: {params} res: {res}")
                 return res
             else:
-                log.error(f"get请求响应错误!!! msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                log.error(f"get请求响应错误!!! msg: {msg} res: {res}"
                           f"\n\turl: {url}, params: {params}")
         except Exception as e:
             log.error(f"get请求出现异常!!! msg: {msg}"
                       f"\n\t异常: {e}"
-                      f"\n\turl: {url}, params: {params} {f'code: {res.status_code}' if res else ''}")
+                      f"\n\turl: {url}, params: {params} res: {res}")

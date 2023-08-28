@@ -115,22 +115,22 @@ class SavePicUtil:
         for i in range(self.test_times):
             res = None
             try:
-                res = self.session.get(url=url)
+                res = self.session.get(url=url, timeout=25)
                 if res.status_code == 200:
                     log.info(f"get图片成功: {msg}, url: {url}")
                     return res
                 if i < self.test_times - 1:
-                    log.warning(f"get图片响应错误: 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                    log.warning(f"get图片响应错误: 第{i + 1}次 msg: {msg} res: {res}"
                                 f"\n\turl: {url}")
                 else:
-                    log.error(f"get图片响应错误!!! 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                    log.error(f"get图片响应错误!!! 第{i + 1}次 msg: {msg} res: {res}"
                               f"\n\turl: {url}")
             except Exception as e:
                 if i < self.test_times - 1:
-                    log.warning(f"get图片出现异常: 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                    log.warning(f"get图片出现异常: 第{i + 1}次 msg: {msg} res: {res}"
                                 f"\n\t异常: {e}"
                                 f"\n\turl: {url}")
                 else:
-                    log.error(f"get图片出现异常!!! 第{i + 1}次 msg: {msg} {f'code: {res.status_code}' if res else ''}"
+                    log.error(f"get图片出现异常!!! 第{i + 1}次 msg: {msg} res: {res}"
                               f"\n\t异常: {e}"
                               f"\n\turl: {url}")
