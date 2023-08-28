@@ -99,7 +99,7 @@ def save_actor(actor_id, cid) -> ActorVo:
             # 演员入库并保存JSON ↓↓↓
             insert_result = actor_dao.insert(actor_vo, log=com_log)
             if insert_result == 1:
-                rcd_data_json.add_data_to_json(json_file=JSON_DATA_ACTOR, data=actor_vo)
+                rcd_data_json.add_data_to_json_list(json_file=JSON_DATA_ACTOR, data=actor_vo)
             elif isinstance(insert_result, Tuple):
                 actor_vo = ActorVo(*insert_result[0])
                 set_cid_for_vo(actor_vo, cid)
@@ -171,7 +171,7 @@ def test_get_actor_list_page():
 if __name__ == '__main__':
     start_time = time.time()
     # start()
-    get_cid_data(4)
+    get_cid_data(10)
     # test_get_actor_list_page()
     end_time = time.time()
     duration = end_time - start_time

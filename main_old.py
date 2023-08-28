@@ -97,7 +97,7 @@ def save_actor(actor_vo: ActorVo, cid):
     # 演员入库并保存JSON ↓↓↓
     insert_result = actor_dao.insert(actor_vo, log=com_log)
     if insert_result == 1:
-        rcd_data_json.add_data_to_json(json_file=JSON_DATA_ACTOR, data=actor_vo)
+        rcd_data_json.add_data_to_json_list(json_file=JSON_DATA_ACTOR, data=actor_vo)
     elif isinstance(insert_result, Tuple):
         print(insert_result)
         actor_vo = ActorVo(*insert_result[0])
