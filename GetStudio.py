@@ -19,7 +19,7 @@ def save_studio(studio_vo, cid):
     # 保存 studio ↓↓↓
     insert_result = studio_dao.insert(studio_vo)
     if insert_result == 1:
-        rcd_data_json.add_data_to_json(json_file=JSON_DATA_STUDIO, data=studio_vo, msg=f"厂商")
+        rcd_data_json.add_data_to_json_list(json_file=JSON_DATA_STUDIO, data=studio_vo, msg=f"厂商")
     elif isinstance(insert_result, tuple):
         studio_vo = StudioVo(*insert_result[0])
         set_cid_for_vo(studio_vo, cid)

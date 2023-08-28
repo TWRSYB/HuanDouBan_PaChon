@@ -22,7 +22,7 @@ def save_label(parent_id, dict_label, cid):
     insert_result = label_dao.insert(label_vo)
     # 插入成功则将数据添加到JSON文件中
     if insert_result == 1:
-        rcd_data_json.add_data_to_json(json_file=JSON_DATA_LABEL, data=label_vo)
+        rcd_data_json.add_data_to_json_list(json_file=JSON_DATA_LABEL, data=label_vo)
     # 插入时数据已经存在则更新数据
     elif isinstance(insert_result, tuple):
         label_vo = LabelVo(*insert_result[0])

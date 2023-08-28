@@ -19,7 +19,7 @@ def save_series(series_vo, cid):
     # 保存 series ↓↓↓
     insert_result = series_dao.insert(series_vo)
     if insert_result == 1:
-        rcd_data_json.add_data_to_json(json_file=JSON_DATA_SERIES, data=series_vo, msg=f"厂商")
+        rcd_data_json.add_data_to_json_list(json_file=JSON_DATA_SERIES, data=series_vo, msg=f"厂商")
     elif isinstance(insert_result, tuple):
         series_vo = SeriesVo(*insert_result[0])
         set_cid_for_vo(series_vo, cid)
