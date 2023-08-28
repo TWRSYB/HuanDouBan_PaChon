@@ -26,7 +26,7 @@ class ReqUtil:
         for i in range(self.test_times):
             res = None
             try:
-                res = self.session.get(url=url, params=params)
+                res = self.session.get(url=url, params=params, timeout=30)
                 if res.status_code == 200:
                     log.info(
                         f"get请求成功: {msg}, url: {url}, params: {params} res: {res}")
@@ -51,7 +51,7 @@ class ReqUtil:
         for i in range(self.test_times):
             res = None
             try:
-                res = self.session.get(url=url, params=params)
+                res = self.session.get(url=url, params=params, timeout=30)
                 if res.status_code == 200:
                     dict_res = json.loads(res.text)
                     if dict_res.get('code') == 200:
@@ -85,7 +85,7 @@ class ReqUtil:
         for i in range(self.test_times):
             res = None
             try:
-                res = self.session.post(url=url, params=params, data=data)
+                res = self.session.post(url=url, params=params, data=data, timeout=30)
                 if res.status_code == 200:
                     dict_res = json.loads(res.text)
                     rcd_data_json.append_data_to_txt(
