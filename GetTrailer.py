@@ -1,16 +1,10 @@
-import json
 import threading
 import time
-from os import makedirs
-from typing import List, Tuple
 
 from Config import GlobleData
-from Config.Config import PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO, OUTPUT_DIR
 from Dao.MovieDao import MovieDao, MovieVo
 from LogUtil import LogUtil
-from LogUtil.LogUtil import process_log, async_log, com_log
-from MyUtil.MyUtil import filename_rm_invalid_chars
-from MyUtil.RcdDataJson import rcd_data_json
+from LogUtil.LogUtil import process_log, async_log
 from ReqUtil.SaveTrailerUtil import SaveTrailerUtil
 
 movie_dao = MovieDao()
@@ -32,13 +26,6 @@ def get_movie_list(i):
 
     movie_list = [MovieVo(*result) for result in select_result_tuple]
     for movie_vo in movie_list:
-        with lock:
-            rcd_data_json.add_data_to_json_dict(f"{OUTPUT_DIR}/jsondatas/trailer_remnant.json",
-                                                key=movie_vo.id, value=movie_vo,
-                                                log=com_log)
-            GlobleData.TRAILER_REMNANT[movie_vo.id] = movie_vo
-            print(GlobleData.TRAILER_REMNANT)
-        # save_trailer_util.get_then_save_trailer(movie_vo=movie_vo, log=async_log)
         save_trailer_util.get_then_save_trailer_async(movie_vo=movie_vo, log=async_log)
         time.sleep(1)  # 模拟耗时操作
     return movie_list
@@ -60,19 +47,18 @@ def start():
 
 
 def get_remnant():
-    with open(file=r"D:\10.temp\06.黄豆瓣数据爬取\01.TEMP-wait10\jsondatas\trailer_remnant.txt", mode='r', encoding='utf-8') as f:
+    with open(file=r"D:\10.temp\06.黄豆瓣数据爬取\01.TEMP-wait10\jsondatas\trailer_remnant.txt", mode='r',
+              encoding='utf-8') as f:
         lines = f.readlines()
-        # print(lines)
-        # print(len(lines))
     for i, line in enumerate(lines):
-        LogUtil.LOG_PROCESS_MOVIE_ORDER = i+1
-        # if i>0 and i % 100 == 0:
-        #     time.sleep(100)  # 模拟耗时操作
+        LogUtil.LOG_PROCESS_MOVIE_ORDER = i + 1
+        if i>0 and i % 100 == 0:
+            time.sleep(100)  # 模拟耗时操作
         dict_line = eval(line)
-        save_trailer_util.get_then_save_trailer_async(url=dict_line['url'], save_dir=dict_line['save_dir'], save_name=dict_line['save_name'], movie_vo=None, log=async_log)
-
+        movie_vo = MovieVo(**dict_line.get('movie'))
+        save_trailer_util.get_then_save_trailer_async(movie_vo=movie_vo, log=async_log)
 
 
 if __name__ == '__main__':
-    # start()
-    get_remnant()
+    start()
+    # get_remnant()

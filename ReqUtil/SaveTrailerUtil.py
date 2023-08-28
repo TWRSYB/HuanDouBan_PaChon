@@ -26,18 +26,17 @@ class SaveTrailerUtil:
             self.session = session
         else:
             self.session = requests.Session()
-            # self.session.timeout = 25  # 设置超时时间为10秒
             self.session.mount('https://', requests.adapters.HTTPAdapter(pool_connections=15, pool_maxsize=360))
             # self.session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=15, pool_maxsize=360))
         self.test_times = test_times
 
-    def get_then_save_trailer_async(self, url, save_dir, save_name, movie_vo: MovieVo, log):
-        threading.Thread(target=self.get_then_save_trailer, args=(url, save_dir, save_name, movie_vo, log)).start()
+    def get_then_save_trailer_async(self, movie_vo: MovieVo, log):
+        threading.Thread(target=self.get_then_save_trailer, args=(movie_vo, log)).start()
 
-    def get_then_save_trailer(self, url, save_dir, save_name,  movie_vo: MovieVo, log=com_log):
-        # save_dir = f"{PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO}/{filename_rm_invalid_chars(movie_vo.studio_nm)}"
-        # save_name = f"{movie_vo.studio_nm}_{movie_vo.number}"
-        # url = movie_vo.trailer
+    def get_then_save_trailer(self, movie_vo: MovieVo, log=com_log):
+        save_dir = f"{PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO}/{filename_rm_invalid_chars(movie_vo.studio_nm)}"
+        save_name = f"{movie_vo.studio_nm}_{movie_vo.number}"
+        url = movie_vo.trailer
         makedirs(save_dir, exist_ok=True)
         invalid_url_list = []
         if url in invalid_url_list:
@@ -50,7 +49,6 @@ class SaveTrailerUtil:
             log.warning(f"发现了嵌套url的情况: url: {url}")
             url = match_nest_http.group(1)
 
-
         res = self.try_get_trailer_times(url=url, log=log)
 
         if res:
@@ -61,13 +59,6 @@ class SaveTrailerUtil:
                 with open(trailer_path, 'wb') as trailer:
                     trailer.write(res.content)
                 log.info(f"保存预告片成功: {trailer_path}, url:{url}")
-                # with lock:
-                #     rcd_data_json.delete_data_from_json_dict(f"{OUTPUT_DIR}/jsondatas/trailer_remnant.json",
-                #                                              delete_key=movie_vo.id,
-                #                                              log=com_log)
-                #     print(GlobleData.TRAILER_REMNANT)
-                #     del GlobleData.TRAILER_REMNANT[movie_vo.id]
-                return True
             except Exception as e:
                 log.error(f"保存预告片发生异常:"
                           f"\n\t异常: {e}"
@@ -76,7 +67,7 @@ class SaveTrailerUtil:
         elif res is not None and res.status_code == 404:
             with lock:
                 rcd_data_json.append_data_to_txt(f"{OUTPUT_DIR}/jsondatas/trailer_remnant_404.txt",
-                                                 data={'url': url, 'save_dir': save_dir, 'save_name': save_name},
+                                                 data={'id': movie_vo.id, 'url': url, 'movie': movie_vo},
                                                  log=log)
             log.error(f"没有获取到预告片, 响应404:"
                       f"\n\tmovie: {movie_vo}"
@@ -84,7 +75,7 @@ class SaveTrailerUtil:
         else:
             with lock:
                 rcd_data_json.append_data_to_txt(f"{OUTPUT_DIR}/jsondatas/trailer_remnant.txt",
-                                                 data={'url': url, 'save_dir': save_dir, 'save_name': save_name},
+                                                 data={'id': movie_vo.id, 'url': url, 'movie': movie_vo},
                                                  log=log)
             log.error(f"没有获取到预告片:"
                       f"\n\tmovie: {movie_vo}"
