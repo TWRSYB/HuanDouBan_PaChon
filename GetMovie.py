@@ -9,16 +9,15 @@ from lxml import etree
 
 from Config import StartPoint
 from Config.Config import JSON_DATA_ISSUER, \
-    JSON_DATA_DIRECTOR, PIC_DIR_MOVIE_COVER_PIC_STUDIO_FANHAO, PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO, \
-    PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO
+    JSON_DATA_DIRECTOR, PIC_DIR_MOVIE_COVER_PIC_STUDIO_FANHAO, PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO
 from Config.ReqConfig import URL_HOST, PAGE_PATH_MOVIE, URL_HOST_API, API_PATH_ACTOR_MOVIE
 from Dao.DirectorDao import DirectorVo, DirectorDao
 from Dao.IssuerDao import IssuerVo, IssuerDao
 from Dao.MagnetDao import MagnetVo, MagnetDao
 from Dao.MovieDao import MovieVo, MovieDao
 from LogUtil import LogUtil
-from LogUtil.LogUtil import com_log, process_log, async_log, save_pic_log
-from MyUtil.MyUtil import dict_to_obj2, filename_rm_invalid_chars
+from LogUtil.LogUtil import com_log, process_log, async_log, pic_log
+from MyUtil.MyUtil import filename_rm_invalid_chars
 from MyUtil.RcdDataJson import rcd_data_json
 from MyUtil.StrToContainerUtil import StrToContainer, tran_dict_by_param_dict
 from MyUtil.XpathUtil import xpath_util
@@ -34,6 +33,7 @@ set_series_id = set()
 
 # 创建一个互斥锁
 lock = threading.Lock()
+
 
 # def get_from_param_dict(param_key, param_dict):
 #     param_value = param_dict.get(param_key)
@@ -51,8 +51,8 @@ def get_movie_detail(dict_movie, log=com_log, movie_order=0) -> MovieVo:
     movie_vo = MovieVo(**dict_movie)
 
     res = req_util.try_get_times(f"{URL_HOST}{PAGE_PATH_MOVIE}/{movie_vo.id}",
-                                     msg=f"获取影片页面 movie_order: {movie_order}, movie_vo: {movie_vo}",
-                                     log=log)
+                                 msg=f"获取影片页面 movie_order: {movie_order}, movie_vo: {movie_vo}",
+                                 log=log)
     if res:
         # 解析 Vue js ↓↓↓
         etree_res = etree.HTML(res.text)
@@ -174,21 +174,22 @@ def get_movie_detail(dict_movie, log=com_log, movie_order=0) -> MovieVo:
             places: List[Tuple[str, str]] = [(dir_cover_studio, f"{movie_vo.studio_nm}_{movie_vo.number}")]
             if movie_vo.big_cove:
                 save_pic_util.save_pic_multi_places(url=movie_vo.big_cove, places=places, msg=f"影片封面图大, 影片: {movie_vo}",
-                                                    log=save_pic_log, is_async=True)
+                                                    log=pic_log, is_async=True)
             elif movie_vo.small_cover:
-                save_pic_util.save_pic_multi_places(url=movie_vo.small_cover, places=places, msg=f"影片封面图小, 影片: {movie_vo}",
-                                                    log=save_pic_log, is_async=True)
+                save_pic_util.save_pic_multi_places(url=movie_vo.small_cover, places=places,
+                                                    msg=f"影片封面图小, 影片: {movie_vo}",
+                                                    log=pic_log, is_async=True)
         # 封面图保存 ↑↑↑
 
-        # 预告片保存 ↓↓↓
-        if trailer:
-            dir_trailer_studio = f"{PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO}/{filename_rm_invalid_chars(movie_vo.studio_nm)}"
-            makedirs(dir_trailer_studio, exist_ok=True)
-            places: List[Tuple[str, str]] = [(dir_trailer_studio, f"{movie_vo.studio_nm}_{movie_vo.number}")]
-            if movie_vo.big_cove:
-                save_pic_util.save_pic_multi_places(url=trailer, places=places,
-                                                    msg=f"影片预告片, 影片: {movie_vo}", log=log, is_async=True)
-        # 预告片保存 ↑↑↑
+        # # 预告片保存 ↓↓↓
+        # if trailer:
+        #     dir_trailer_studio = f"{PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO}/{filename_rm_invalid_chars(movie_vo.studio_nm)}"
+        #     makedirs(dir_trailer_studio, exist_ok=True)
+        #     places: List[Tuple[str, str]] = [(dir_trailer_studio, f"{movie_vo.studio_nm}_{movie_vo.number}")]
+        #     if movie_vo.big_cove:
+        #         save_pic_util.save_pic_multi_places(url=trailer, places=places,
+        #                                             msg=f"影片预告片, 影片: {movie_vo}", log=log, is_async=True)
+        # # 预告片保存 ↑↑↑
 
         # 预览图保存 ↓↓↓
         big_gallery_list = re.findall(r',big_img:"(.+?)"}', script_text)
@@ -196,9 +197,10 @@ def get_movie_detail(dict_movie, log=com_log, movie_order=0) -> MovieVo:
             dir_gallery_studio_fanhao = f"{PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO}/{filename_rm_invalid_chars(movie_vo.studio_nm)}/{filename_rm_invalid_chars(movie_vo.number)}"
             makedirs(dir_gallery_studio_fanhao, exist_ok=True)
             for i, big_gallery in enumerate(big_gallery_list):
-                places: List[Tuple[str, str]] = [(dir_gallery_studio_fanhao, f"{movie_vo.number}_{str(i + 1).zfill(3)}")]
+                places: List[Tuple[str, str]] = [
+                    (dir_gallery_studio_fanhao, f"{movie_vo.number}_{str(i + 1).zfill(3)}")]
                 save_pic_util.save_pic_multi_places(url=big_gallery, places=places,
-                                                    msg=f"影片预览图, 影片: {movie_vo}", log=save_pic_log, is_async=True)
+                                                    msg=f"影片预览图, 影片: {movie_vo}", log=pic_log, is_async=True)
         # 预览图保存 ↑↑↑
 
         # 保存磁力链接 ↓↓↓
@@ -274,36 +276,35 @@ def get_actor_movie_page(actor_id, page_num):
         # 'cid': '2',
 
     }
-    res = req_util.try_ajax_post_times(url=f"{URL_HOST_API}{API_PATH_ACTOR_MOVIE}", data=data,
-                                       msg=f"获取演员影片列表: 第{page_num}页 演员: {actor_id}")
+    dict_res = req_util.try_ajax_post_times(url=f"{URL_HOST_API}{API_PATH_ACTOR_MOVIE}", data=data,
+                                            msg=f"获取演员影片列表: 第{page_num}页 演员: {actor_id}")
 
-    if res:
-        dict_res = json.loads(res.text)
+    if dict_res:
+        if str(dict_res.get('data').get('pageSize')) != '50':
+            com_log.error(f"获取演员影片列表, 响应的pageSize不是50: {dict_res}, 第{page_num}页 演员:"
+                          f" {actor_id}")
+        # for i, dict_movie in enumerate(dict_res.get('data').get('list')):
+        #     LogUtil.LOG_PROCESS_MOVIE_ORDER = i + 1
+        #     if StartPoint.START_POINT_MOVIE_ORDER > 1:
+        #         process_log.process4(f"跳过 获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_id}")
+        #         StartPoint.START_POINT_MOVIE_ORDER -= 1
+        #         continue
+        #     process_log.process4(f"获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_id} Start")
+        #     movie_vo = get_movie_detail(dict_movie)
+        #     movie_list.append(movie_vo)
+        #     process_log.process4(f"获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_vo} End")
 
-        if dict_res.get('code') == 200:
-            if str(dict_res.get('data').get('pageSize')) != '50':
-                com_log.error(f"获取演员影片列表, 响应的pageSize不是50: {dict_res}, 第{page_num}页 演员:"
-                              f" {actor_id}")
-            # for i, dict_movie in enumerate(dict_res.get('data').get('list')):
-            #     LogUtil.LOG_PROCESS_MOVIE_ORDER = i + 1
-            #     if StartPoint.START_POINT_MOVIE_ORDER > 1:
-            #         process_log.process4(f"跳过 获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_id}")
-            #         StartPoint.START_POINT_MOVIE_ORDER -= 1
-            #         continue
-            #     process_log.process4(f"获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_id} Start")
-            #     movie_vo = get_movie_detail(dict_movie)
-            #     movie_list.append(movie_vo)
-            #     process_log.process4(f"获取影片信息: 第{i + 1}个 第{page_num}页 演员: {actor_vo} End")
-
-            # 创建线程池, 异步多线程获取影片信息(整页开始)
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                # 开启多个线程获取影片详情
-                futures = [executor.submit(get_movie_detail_async, args=(dict_movie, actor_id, page_num, i))
-                           for i, dict_movie in enumerate(dict_res.get('data').get('list'))]
-            # 等待所有线程完成并获取结果
-            for future in concurrent.futures.as_completed(futures):
-                if future.result():
-                    movie_list.append(future.result())
+        # 创建线程池, 异步多线程获取影片信息(整页开始)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # 开启多个线程获取影片详情
+            futures = [executor.submit(get_movie_detail_async, args=(dict_movie, actor_id, page_num, i))
+                       for i, dict_movie in enumerate(dict_res.get('data').get('list'))]
+        # 等待所有线程完成并获取结果
+        for future in concurrent.futures.as_completed(futures):
+            if future.result():
+                movie_list.append(future.result())
+    else:
+        com_log.error(f"获取演员影片列表失败: 第{page_num}页 演员: {actor_id}")
     return movie_list
 
 

@@ -53,24 +53,21 @@ def get_label_page(cid):
     params = {
         'cid': cid,
     }
-    res = req_util.try_ajax_get_times(url=f"{URL_HOST_API}/{API_PATH_LABEL_LIST}", params=params,
-                                      msg=f"获取Label列表: cid: {cid}")
-    if res:
-        dict_res = json.loads(res.text)
-        if dict_res.get('code') == 200:
-            for i, dict_label in enumerate(dict_res.get('data')):
-                LogUtil.LOG_PROCESS_ACTOR_PAGE = i
-                LogUtil.LOG_PROCESS_ACTOR_ORDER = 0
-                LogUtil.LOG_PROCESS_MOVIE_PAGE = 0
-                LogUtil.LOG_PROCESS_MOVIE_ORDER = 0
-                if StartPoint.START_POINT_ACTOR_PAGE > 1:
-                    process_log.process1(f"跳过 获取 父Label 及其子元素: Label: {dict_label['name']}")
-                    StartPoint.START_POINT_ACTOR_PAGE -= 1
-                    continue
-                save_label('无', dict_label, cid)
-        else:
-            com_log.error(f"获取 Label 列表接口报错: cid: {cid}"
-                          f"\n\t接口返回: {dict_res}")
+    dict_res = req_util.try_ajax_get_times(url=f"{URL_HOST_API}/{API_PATH_LABEL_LIST}", params=params,
+                                           msg=f"获取Label列表: cid: {cid}")
+    if dict_res:
+        for i, dict_label in enumerate(dict_res.get('data')):
+            LogUtil.LOG_PROCESS_ACTOR_PAGE = i
+            LogUtil.LOG_PROCESS_ACTOR_ORDER = 0
+            LogUtil.LOG_PROCESS_MOVIE_PAGE = 0
+            LogUtil.LOG_PROCESS_MOVIE_ORDER = 0
+            if StartPoint.START_POINT_ACTOR_PAGE > 1:
+                process_log.process1(f"跳过 获取 父Label 及其子元素: Label: {dict_label['name']}")
+                StartPoint.START_POINT_ACTOR_PAGE -= 1
+                continue
+            save_label('无', dict_label, cid)
+    else:
+        com_log.error(f"获取Label列表失败: cid: {cid}")
 
 
 def get_cid_data(cid):
@@ -92,6 +89,7 @@ def start():
         process_log.process1(f"获取cid的数据: cid:{cid} Start")
         get_cid_data(cid)
         process_log.process1(f"获取cid的数据: cid:{cid} End")
+
 
 if __name__ == '__main__':
     start()

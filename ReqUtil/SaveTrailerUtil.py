@@ -1,14 +1,11 @@
 import re
 import threading
-import time
 import traceback
 from os import makedirs
-from typing import List, Tuple
 
 import requests
 from requests import Session
 
-from Config import GlobleData
 from Config.Config import OUTPUT_DIR, PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO
 from Dao.MovieDao import MovieVo
 from LogUtil.LogUtil import com_log

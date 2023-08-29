@@ -96,7 +96,7 @@ class ComLog:
         self.logger_com.error(msg)
 
 
-class SavePicLog:
+class PicLog:
     # 获取日志对象
     logger_pic = logging.getLogger('logger_pic')
     logger_pic.setLevel(logging.DEBUG)
@@ -240,4 +240,4 @@ class AsyncLog:
 com_log = ComLog()
 process_log = ProcessLog()
 async_log = AsyncLog()
-save_pic_log = SavePicLog()
+pic_log = PicLog()

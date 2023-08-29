@@ -7,10 +7,12 @@ import requests
 from requests import Session
 
 from LogUtil.LogUtil import com_log
+from ReqUtil.ReqUtil import ReqUtil
 
 
-class SavePicUtil:
+class SavePicUtil(ReqUtil):
     def __init__(self, session: Session = None, test_times: int = 5):
+        super().__init__(session)
         if session:
             self.session = session
         else:
@@ -20,9 +22,11 @@ class SavePicUtil:
             self.session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=15, pool_maxsize=360))
         self.test_times = test_times
 
-    def save_pic(self, url, save_dir, save_name, msg='', is_async=False, log=com_log):
+    def save_pic(self, url, save_dir, save_name, msg='', is_async=False, timeout=30, test_times=5, log=com_log):
         """
         保存图片
+        :param test_times:
+        :param timeout:
         :param url: 图片url
         :param save_dir: 保存目录
         :param save_name: 保存图片名称
@@ -32,11 +36,13 @@ class SavePicUtil:
         :return: None
         """
         places: List[Tuple[str, str]] = [(save_dir, save_name)]
-        self.save_pic_multi_places(url, places, msg, is_async, log)
+        self.save_pic_multi_places(url, places, msg, is_async, timeout, test_times, log)
 
-    def save_pic_multi_places(self, url, places: List[Tuple[str, str]], msg='', is_async=False, log=com_log):
+    def save_pic_multi_places(self, url, places: List[Tuple[str, str]], msg='', is_async=False, timeout=30, test_times=5, log=com_log):
         """
         保存图片到多个目录
+        :param test_times:
+        :param timeout:
         :param url: 图片url
         :param places: 保存的地点
         :param msg: 消息
@@ -45,11 +51,11 @@ class SavePicUtil:
         :return: None
         """
         if is_async:
-            threading.Thread(target=self.__get_then_save_pic, args=(url, places, msg, log)).start()
+            threading.Thread(target=self.__get_then_save_pic, args=(url, places, timeout, test_times, msg, log)).start()
         else:
-            self.__get_then_save_pic(url, places, msg, log)
+            self.__get_then_save_pic(url, places, timeout, test_times, msg, log)
 
-    def __get_then_save_pic(self, url: str, places, msg, log):
+    def __get_then_save_pic(self, url: str, places, timeout, test_times, msg, log):
         """
         获取然后保存图片
         :param url: 图片url
@@ -69,15 +75,15 @@ class SavePicUtil:
             log.warning(f"发现了嵌套url的情况: url: {url}")
             url = match_nest_http.group(1)
 
-        # if url.startswith('https://www.javbus.comhttps://i.imgur.com/'):
-        #     url = url.replace('https://www.javbus.comhttps://i.imgur.com/', 'https://i.imgur.com/')
         match_invalid_subfix = re.match(r'(.+\.jpg)\?\d+$', url)
         if match_invalid_subfix:
             log.warning(f"发现了url以.jpg?xx结尾的情况: url: {url}")
             url = match_invalid_subfix.group(1)
 
-        res = self.try_get_pic_times(url=url, msg=msg, log=log)
-
+        # res = self.try_get_pic_times(url=url, msg=msg, log=log)
+        req_type = 4
+        res = self.try_req_times(url=url, req_type=req_type, timeout=timeout, msg=msg, log=log,
+                                 test_times=test_times)
         # # 图片获取失败, 尝试别的一些办法
         # if not res:
         #     # 尝试替换https为http
@@ -104,33 +110,33 @@ class SavePicUtil:
                           f"\n\turl:{url}"
                           f"{traceback.format_exc()}")
 
-    def try_get_pic_times(self, url, msg="", log=com_log):
-        """
-        尝试获取图片多次
-        :param url: 图片url
-        :param msg:
-        :param log:
-        :return:
-        """
-        for i in range(self.test_times):
-            res = None
-            try:
-                res = self.session.get(url=url, timeout=25)
-                if res.status_code == 200:
-                    log.info(f"get图片成功: {msg}, url: {url}")
-                    return res
-                if i < self.test_times - 1:
-                    log.warning(f"get图片响应错误: 第{i + 1}次 msg: {msg} res: {res}"
-                                f"\n\turl: {url}")
-                else:
-                    log.error(f"get图片响应错误!!! 第{i + 1}次 msg: {msg} res: {res}"
-                              f"\n\turl: {url}")
-            except Exception as e:
-                if i < self.test_times - 1:
-                    log.warning(f"get图片出现异常: 第{i + 1}次 msg: {msg} res: {res}"
-                                f"\n\t异常: {e}"
-                                f"\n\turl: {url}")
-                else:
-                    log.error(f"get图片出现异常!!! 第{i + 1}次 msg: {msg} res: {res}"
-                              f"\n\t异常: {e}"
-                              f"\n\turl: {url}")
+    # def try_get_pic_times(self, url, msg="", log=com_log):
+    #     """
+    #     尝试获取图片多次
+    #     :param url: 图片url
+    #     :param msg:
+    #     :param log:
+    #     :return:
+    #     """
+    #     for i in range(self.test_times):
+    #         res = None
+    #         try:
+    #             res = self.session.get(url=url, timeout=25)
+    #             if res.status_code == 200:
+    #                 log.info(f"get图片成功: {msg}, url: {url}")
+    #                 return res
+    #             if i < self.test_times - 1:
+    #                 log.warning(f"get图片响应错误: 第{i + 1}次 msg: {msg} res: {res}"
+    #                             f"\n\turl: {url}")
+    #             else:
+    #                 log.error(f"get图片响应错误!!! 第{i + 1}次 msg: {msg} res: {res}"
+    #                           f"\n\turl: {url}")
+    #         except Exception as e:
+    #             if i < self.test_times - 1:
+    #                 log.warning(f"get图片出现异常: 第{i + 1}次 msg: {msg} res: {res}"
+    #                             f"\n\t异常: {e}"
+    #                             f"\n\turl: {url}")
+    #             else:
+    #                 log.error(f"get图片出现异常!!! 第{i + 1}次 msg: {msg} res: {res}"
+    #                           f"\n\t异常: {e}"
+    #                           f"\n\turl: {url}")
