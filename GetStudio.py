@@ -2,7 +2,8 @@ import json
 from typing import List
 
 from Config import StartPoint
-from Config.Config import URL_HOST_API, API_PATH_STUDIO_LIST, JSON_DATA_STUDIO
+from Config.Config import JSON_DATA_STUDIO
+from Config.ReqConfig import URL_HOST_API, API_PATH_STUDIO_LIST
 from Dao.StudioDao import StudioVo, StudioDao
 from LogUtil import LogUtil
 from LogUtil.LogUtil import process_log, com_log
@@ -38,29 +39,26 @@ def get_studio_page(page_num, cid) -> List[StudioVo]:
         'pageSize': '50',
 
     }
-    res = req_util.try_ajax_get_times(url=f"{URL_HOST_API}/{API_PATH_STUDIO_LIST}", params=params,
-                                      msg=f"获取 studio列表: 第{page_num}页 cid: {cid}")
-    if res:
-        dict_res = json.loads(res.text)
-        if dict_res.get('code') == 200:
-            if str(dict_res.get('data').get('pageSize')) != '50':
-                com_log.error(f"获取 studio 列表, 响应的pageSize不是50: {dict_res}, 第{page_num}页 cid: {cid}")
-            for i, dict_studio in enumerate(dict_res.get('data').get('filmCompaniesList')):
-                LogUtil.LOG_PROCESS_ACTOR_ORDER = i + 1
-                LogUtil.LOG_PROCESS_MOVIE_PAGE = 0
-                LogUtil.LOG_PROCESS_MOVIE_ORDER = 0
-                if StartPoint.START_POINT_ACTOR_ORDER > 1:
-                    process_log.process1(f"跳过 获取 studio 信息: 第{i + 1}个 第{page_num}页")
-                    StartPoint.START_POINT_ACTOR_ORDER -= 1
-                    continue
-                studio_vo = StudioVo(**dict_studio)
-                set_cid_for_vo(studio_vo, cid)
-                com_log.info(f"获取到 studio: {studio_vo}  cid: {cid} 第{page_num}页 第{i + 1}个")
-                studio_list.append(studio_vo)
-                save_studio(studio_vo, cid)
-        else:
-            com_log.error(f"获取 studio列表接口报错: cid: {cid}"
-                          f"\n\t接口返回: {dict_res}")
+    dict_res = req_util.try_ajax_get_times(url=f"{URL_HOST_API}/{API_PATH_STUDIO_LIST}", params=params,
+                                           msg=f"获取 studio列表: 第{page_num}页 cid: {cid}")
+    if dict_res:
+        if str(dict_res.get('data').get('pageSize')) != '50':
+            com_log.error(f"获取 studio 列表, 响应的pageSize不是50: {dict_res}, 第{page_num}页 cid: {cid}")
+        for i, dict_studio in enumerate(dict_res.get('data').get('filmCompaniesList')):
+            LogUtil.LOG_PROCESS_ACTOR_ORDER = i + 1
+            LogUtil.LOG_PROCESS_MOVIE_PAGE = 0
+            LogUtil.LOG_PROCESS_MOVIE_ORDER = 0
+            if StartPoint.START_POINT_ACTOR_ORDER > 1:
+                process_log.process1(f"跳过 获取 studio 信息: 第{i + 1}个 第{page_num}页")
+                StartPoint.START_POINT_ACTOR_ORDER -= 1
+                continue
+            studio_vo = StudioVo(**dict_studio)
+            set_cid_for_vo(studio_vo, cid)
+            com_log.info(f"获取到 studio: {studio_vo}  cid: {cid} 第{page_num}页 第{i + 1}个")
+            studio_list.append(studio_vo)
+            save_studio(studio_vo, cid)
+    else:
+        com_log.error(f"获取 studio列表失败: 第{page_num}页 cid: {cid}")
 
     return studio_list
 

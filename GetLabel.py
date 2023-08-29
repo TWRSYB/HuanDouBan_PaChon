@@ -1,7 +1,8 @@
 import json
 
 from Config import StartPoint
-from Config.Config import URL_HOST_API, API_PATH_LABEL_LIST, JSON_DATA_LABEL
+from Config.Config import JSON_DATA_LABEL
+from Config.ReqConfig import URL_HOST_API, API_PATH_LABEL_LIST
 from Dao.LabelDao import LabelVo, LabelDao
 from LogUtil import LogUtil
 from LogUtil.LogUtil import process_log, com_log

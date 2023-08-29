@@ -2,7 +2,8 @@ import json
 from typing import List
 
 from Config import StartPoint
-from Config.Config import URL_HOST_API, API_PATH_SERIES_LIST, JSON_DATA_SERIES
+from Config.Config import JSON_DATA_SERIES
+from Config.ReqConfig import URL_HOST_API, API_PATH_SERIES_LIST
 from Dao.SeriesDao import SeriesVo, SeriesDao
 from LogUtil import LogUtil
 from LogUtil.LogUtil import process_log, com_log
@@ -38,29 +39,26 @@ def get_series_page(page_num, cid) -> List[SeriesVo]:
         'pageSize': '50',
 
     }
-    res = req_util.try_ajax_get_times(url=f"{URL_HOST_API}/{API_PATH_SERIES_LIST}", params=params,
-                                      msg=f"获取 series列表: 第{page_num}页 cid: {cid}")
-    if res:
-        dict_res = json.loads(res.text)
-        if dict_res.get('code') == 200:
-            if str(dict_res.get('data').get('pageSize')) != '50':
-                com_log.error(f"获取 series 列表, 响应的pageSize不是50: {dict_res}, 第{page_num}页 cid: {cid}")
-            for i, dict_series in enumerate(dict_res.get('data').get('seriesList')):
-                LogUtil.LOG_PROCESS_ACTOR_ORDER = i + 1
-                LogUtil.LOG_PROCESS_MOVIE_PAGE = 0
-                LogUtil.LOG_PROCESS_MOVIE_ORDER = 0
-                if StartPoint.START_POINT_ACTOR_ORDER > 1:
-                    process_log.process1(f"跳过 获取 series 信息: 第{i + 1}个 第{page_num}页")
-                    StartPoint.START_POINT_ACTOR_ORDER -= 1
-                    continue
-                series_vo = SeriesVo(**dict_series)
-                set_cid_for_vo(series_vo, cid)
-                com_log.info(f"获取到 series: {series_vo}  cid: {cid} 第{page_num}页 第{i + 1}个")
-                series_list.append(series_vo)
-                save_series(series_vo, cid)
-        else:
-            com_log.error(f"获取 series列表接口报错: cid: {cid}"
-                          f"\n\t接口返回: {dict_res}")
+    dict_res = req_util.try_ajax_get_times(url=f"{URL_HOST_API}/{API_PATH_SERIES_LIST}", params=params,
+                                           msg=f"获取 series列表: 第{page_num}页 cid: {cid}")
+    if dict_res:
+        if str(dict_res.get('data').get('pageSize')) != '50':
+            com_log.error(f"获取 series 列表, 响应的pageSize不是50: {dict_res}, 第{page_num}页 cid: {cid}")
+        for i, dict_series in enumerate(dict_res.get('data').get('seriesList')):
+            LogUtil.LOG_PROCESS_ACTOR_ORDER = i + 1
+            LogUtil.LOG_PROCESS_MOVIE_PAGE = 0
+            LogUtil.LOG_PROCESS_MOVIE_ORDER = 0
+            if StartPoint.START_POINT_ACTOR_ORDER > 1:
+                process_log.process1(f"跳过 获取 series 信息: 第{i + 1}个 第{page_num}页")
+                StartPoint.START_POINT_ACTOR_ORDER -= 1
+                continue
+            series_vo = SeriesVo(**dict_series)
+            set_cid_for_vo(series_vo, cid)
+            com_log.info(f"获取到 series: {series_vo}  cid: {cid} 第{page_num}页 第{i + 1}个")
+            series_list.append(series_vo)
+            save_series(series_vo, cid)
+    else:
+        com_log.error(f"获取 series列表失败: 第{page_num}页 cid: {cid}")
 
     return series_list
 

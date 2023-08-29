@@ -54,16 +54,15 @@ class ReqUtil:
         :return: Dict
         """
         req_type = 2
-        res = self.__try_req_times(url, req_type=req_type, timeout=timeout, params=params, msg=msg, log=log,
+        dict_res = self.__try_req_times(url, req_type=req_type, timeout=timeout, params=params, msg=msg, log=log,
                                    test_times=test_times)
-        if res:
-            dict_res = json.loads(res.text)
+        if dict_res:
             rcd_data_json.append_data_to_txt(
                 txt_file=f"{OUTPUT_DIR}/Ajax_res/ajax_get_{filename_rm_invalid_chars(url)}.txt",
                 data={'params': params, 'dict_res': dict_res}, msg=f"{self.req_type_annotations[req_type]}接口响应成功",
                 log=log)
             log.info(
-                f"{self.req_type_annotations[req_type]}成功: {msg}, url: {url}, params: {params} res: {res}")
+                f"{self.req_type_annotations[req_type]}成功: {msg}, url: {url}, params: {params} dict_res: {dict_res}")
             return dict_res
 
     def try_ajax_post_times(self, url, timeout=30, params=None, data=None, msg="", log=com_log, test_times: int = 5):
@@ -79,18 +78,17 @@ class ReqUtil:
         :return: Dict
         """
         req_type = 3
-        res = self.__try_req_times(url, req_type=req_type, timeout=timeout, params=params, data=data, msg=msg, log=log,
+        dict_res = self.__try_req_times(url, req_type=req_type, timeout=timeout, params=params, data=data, msg=msg, log=log,
                                    test_times=test_times)
-        if res:
-            dict_res = json.loads(res.text)
+        if dict_res:
             rcd_data_json.append_data_to_txt(
-                txt_file=f"{OUTPUT_DIR}/jsondatas/ajax_post_{filename_rm_invalid_chars(url)}.txt",
+                txt_file=f"{OUTPUT_DIR}/Ajax_res/ajax_post_{filename_rm_invalid_chars(url)}.txt",
                 data={'params': params, 'data': data, 'dict_res': dict_res},
                 msg=f"{self.req_type_annotations[req_type]}接口响应成功",
                 log=log
             )
             log.info(
-                f"{self.req_type_annotations[req_type]}成功: {msg}, url: {url}, params: {params}, data: {data}, res: {res}")
+                f"{self.req_type_annotations[req_type]}成功: {msg}, url: {url}, params: {params}, data: {data}, dict_res: {dict_res}")
             return dict_res
 
     def __try_req_times(self, url, req_type, timeout=30, params=None, data=None, msg="", log=com_log,
@@ -114,19 +112,30 @@ class ReqUtil:
                     res = self.session.get(url=url, params=params, timeout=timeout)
                 elif req_type in [3]:
                     res = self.session.post(url=url, params=params, data=data, timeout=timeout)
-                if res.status_code == 200 and req_type in [1]:
-                    return res
-                if res.status_code == 200 and req_type in [2, 3] and json.loads(res.text).get('code') == 200:
-                    return res
-                if i < test_times - 1:
+                if res.status_code == 200:
+                    if req_type in [1]:
+                        return res
+                    elif req_type in [2, 3]:
+                        dict_res = json.loads(res.text)
+                        if dict_res.get('code') == 200:
+                            return dict_res
+                        elif i < test_times - 1:
+                            log.warning(
+                                f"{self.req_type_annotations[req_type]}请求成功, 但接口响应错误: 第{i + 1}次 msg: {msg} dict_res: {dict_res}"
+                                f"\n\turl: {url}, params: {params}")
+                        else:
+                            log.error(f"{self.req_type_annotations[req_type]}请求成功, 但接口响应错误!!! 第{i + 1}次 dict_res: {dict_res}"
+                                      f"\n\turl: {url}, params: {params}")
+
+                elif i < test_times - 1:
                     log.warning(f"{self.req_type_annotations[req_type]}请求响应错误: 第{i + 1}次 msg: {msg} res: {res}"
                                 f"\n\turl: {url}, params: {params}")
                 else:
                     if res.status_code == 404:
-                        log.error(f"{self.req_type_annotations[req_type]}请求响应错误404!!! 第{i + 1}次 msg: {msg}"
+                        log.error(f"{self.req_type_annotations[req_type]}请求响应错误404!!! 第{i + 1}次 msg: {msg} res: {res}"
                                   f"\n\turl: {url}, params: {params}")
                         return res
-                    log.error(f"{self.req_type_annotations[req_type]}请求响应错误!!! 第{i + 1}次 msg: {msg}"
+                    log.error(f"{self.req_type_annotations[req_type]}请求响应错误!!! 第{i + 1}次 msg: {msg} res: {res}"
                               f"\n\turl: {url}, params: {params}")
             except Exception as e:
                 if i < test_times - 1:

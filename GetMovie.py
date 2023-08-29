@@ -8,9 +8,10 @@ from typing import List, Tuple, Dict
 from lxml import etree
 
 from Config import StartPoint
-from Config.Config import URL_HOST, API_PATH_ACTOR_MOVIE, URL_HOST_API, PAGE_PATH_MOVIE, JSON_DATA_ISSUER, \
+from Config.Config import JSON_DATA_ISSUER, \
     JSON_DATA_DIRECTOR, PIC_DIR_MOVIE_COVER_PIC_STUDIO_FANHAO, PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO, \
     PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO
+from Config.ReqConfig import URL_HOST, PAGE_PATH_MOVIE, URL_HOST_API, API_PATH_ACTOR_MOVIE
 from Dao.DirectorDao import DirectorVo, DirectorDao
 from Dao.IssuerDao import IssuerVo, IssuerDao
 from Dao.MagnetDao import MagnetVo, MagnetDao
@@ -49,7 +50,7 @@ def get_movie_detail(dict_movie, log=com_log, movie_order=0) -> MovieVo:
 
     movie_vo = MovieVo(**dict_movie)
 
-    res = req_util.try_get_req_times(f"{URL_HOST}{PAGE_PATH_MOVIE}/{movie_vo.id}",
+    res = req_util.try_get_times(f"{URL_HOST}{PAGE_PATH_MOVIE}/{movie_vo.id}",
                                      msg=f"获取影片页面 movie_order: {movie_order}, movie_vo: {movie_vo}",
                                      log=log)
     if res:
