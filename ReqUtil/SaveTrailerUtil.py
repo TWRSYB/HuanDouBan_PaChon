@@ -13,12 +13,14 @@ from LogUtil.LogUtil import com_log
 # 创建一个互斥锁
 from MyUtil.MyUtil import filename_rm_invalid_chars
 from MyUtil.RcdDataJson import rcd_data_json
+from ReqUtil.BaseReqUtil import BaseReqUtil, ReqType
 
 lock = threading.Lock()
 
 
-class SaveTrailerUtil:
+class SaveTrailerUtil(BaseReqUtil):
     def __init__(self, session: Session = None, test_times: int = 5):
+        super().__init__(session)
         if session:
             self.session = session
         else:
@@ -45,8 +47,8 @@ class SaveTrailerUtil:
         if match_nest_http:
             log.warning(f"发现了嵌套url的情况: url: {url}")
             url = match_nest_http.group(1)
-
-        res = self.try_get_trailer_times(url=url, log=log)
+        req_type = ReqType(comment='get预告片', fun='get', is_ajax=False)
+        res = self.try_req_times(url=url, req_type=req_type, timeout=150, log=log)
 
         if res:
             try:
@@ -77,30 +79,3 @@ class SaveTrailerUtil:
             log.error(f"没有获取到预告片:"
                       f"\n\tmovie: {movie_vo}"
                       f"\n\tsave_dir: {save_dir}, save_name: {save_name}")
-
-    def try_get_trailer_times(self, url, msg="", log=com_log):
-        for i in range(self.test_times):
-            res = None
-            try:
-                res = self.session.get(url=url, timeout=200)
-                if res.status_code == 200:
-                    log.info(f"get预告片成功: {msg}, url: {url}")
-                    return res
-                if i < self.test_times - 1:
-                    log.warning(f"get预告片响应错误: 第{i + 1}次 msg: {msg} res: {res}"
-                                f"\n\turl: {url}")
-                else:
-                    log.error(f"get预告片响应错误!!! 第{i + 1}次 msg: {msg} res: {res}"
-                              f"\n\turl: {url}")
-                    if res.status_code == 404:
-                        log.error(f"get预告片响应404: {msg}, url: {url}")
-                        return res
-            except Exception as e:
-                if i < self.test_times - 1:
-                    log.warning(f"get预告片出现异常: 第{i + 1}次 msg: {msg} res: {res}"
-                                f"\n\t异常: {e}"
-                                f"\n\turl: {url}")
-                else:
-                    log.error(f"get预告片出现异常!!! 第{i + 1}次 msg: {msg} res: {res}"
-                              f"\n\t异常: {e}"
-                              f"\n\turl: {url}")

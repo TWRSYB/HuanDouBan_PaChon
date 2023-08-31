@@ -9,15 +9,31 @@ out_attributes = """
 """
 
 init_attributes = """
-                self.id = id  # 系列ID
-        self.name = name  # 系列名
-        self.movie_sum = movie_sum  # 影片数量
-        self.like_sum = like_sum  # 收藏数量
-        self.in_cid_1 = in_cid_1  # 有码
-        self.in_cid_2 = in_cid_2  # 无码
-        self.in_cid_3 = in_cid_3  # 欧美
-        self.in_cid_4 = in_cid_4  # FC2
-        self.in_cid_10 = in_cid_10  # 国产
+        self.id = id                                        # 影片ID
+        self.number = number                                # 影片番号
+        self.name = name                                    # 影片名称
+        self.time = time                                    # 影片时长 s/60
+        self.release_time = release_time                    # 发行时间
+        self.small_cover = small_cover                      # 封面图小
+        self.big_cove = big_cove                            # 封面图大
+        self.trailer = trailer                              # 预告片
+        self.score = score                                  # 评分
+        self.score_people = score_people                    # 评分人数
+        self.comment_num = comment_num                      # 评论数
+        self.flux_linkage_num = flux_linkage_num            # 磁力连接数量
+        self.flux_linkage_time = flux_linkage_time          # 磁力连接时间
+        self.created_at = created_at                        # 制作时间
+        self.label_names = label_names                      # 分类
+        self.label_ids = label_ids                          # 分类ID
+        self.actor_names = actor_names                      # 演员
+        self.actor_ids = actor_ids                          # 演员ID
+        self.director_name = director_name                  # 导演名
+        self.director_id = director_id                      # 导演ID
+        self.studio_name = studio_name                      # 制片商名
+        self.studio_id = studio_id                          # 制片商ID
+        self.series_name = series_name                      # 系列名
+        self.series_id = series_id                          # 系列ID
+        self.issuer_name = issuer_name                      # 发行商名
 """
 
 out_attribute_list = out_attributes.splitlines()

@@ -7,10 +7,11 @@ import requests
 from requests import Session
 
 from LogUtil.LogUtil import com_log
+from ReqUtil.BaseReqUtil import BaseReqUtil, ReqType
 from ReqUtil.ReqUtil import ReqUtil
 
 
-class SavePicUtil(ReqUtil):
+class SavePicUtil(BaseReqUtil):
     def __init__(self, session: Session = None, test_times: int = 5):
         super().__init__(session)
         if session:
@@ -22,7 +23,7 @@ class SavePicUtil(ReqUtil):
             self.session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=15, pool_maxsize=360))
         self.test_times = test_times
 
-    def save_pic(self, url, save_dir, save_name, msg='', is_async=False, timeout=30, test_times=5, log=com_log):
+    def save_pic(self, url, save_dir, save_name, msg='', is_async=False, timeout=45, test_times=5, log=com_log):
         """
         保存图片
         :param test_times:
@@ -38,7 +39,7 @@ class SavePicUtil(ReqUtil):
         places: List[Tuple[str, str]] = [(save_dir, save_name)]
         self.save_pic_multi_places(url, places, msg, is_async, timeout, test_times, log)
 
-    def save_pic_multi_places(self, url, places: List[Tuple[str, str]], msg='', is_async=False, timeout=30, test_times=5, log=com_log):
+    def save_pic_multi_places(self, url, places: List[Tuple[str, str]], msg='', is_async=False, timeout=45, test_times=5, log=com_log):
         """
         保存图片到多个目录
         :param test_times:
@@ -81,7 +82,7 @@ class SavePicUtil(ReqUtil):
             url = match_invalid_subfix.group(1)
 
         # res = self.try_get_pic_times(url=url, msg=msg, log=log)
-        req_type = 4
+        req_type = ReqType(comment='get图片', fun='get', is_ajax=False)
         res = self.try_req_times(url=url, req_type=req_type, timeout=timeout, msg=msg, log=log,
                                  test_times=test_times)
         # # 图片获取失败, 尝试别的一些办法
@@ -109,34 +110,3 @@ class SavePicUtil(ReqUtil):
                           f"\n\t异常: {e}"
                           f"\n\turl:{url}"
                           f"{traceback.format_exc()}")
-
-    # def try_get_pic_times(self, url, msg="", log=com_log):
-    #     """
-    #     尝试获取图片多次
-    #     :param url: 图片url
-    #     :param msg:
-    #     :param log:
-    #     :return:
-    #     """
-    #     for i in range(self.test_times):
-    #         res = None
-    #         try:
-    #             res = self.session.get(url=url, timeout=25)
-    #             if res.status_code == 200:
-    #                 log.info(f"get图片成功: {msg}, url: {url}")
-    #                 return res
-    #             if i < self.test_times - 1:
-    #                 log.warning(f"get图片响应错误: 第{i + 1}次 msg: {msg} res: {res}"
-    #                             f"\n\turl: {url}")
-    #             else:
-    #                 log.error(f"get图片响应错误!!! 第{i + 1}次 msg: {msg} res: {res}"
-    #                           f"\n\turl: {url}")
-    #         except Exception as e:
-    #             if i < self.test_times - 1:
-    #                 log.warning(f"get图片出现异常: 第{i + 1}次 msg: {msg} res: {res}"
-    #                             f"\n\t异常: {e}"
-    #                             f"\n\turl: {url}")
-    #             else:
-    #                 log.error(f"get图片出现异常!!! 第{i + 1}次 msg: {msg} res: {res}"
-    #                           f"\n\t异常: {e}"
-    #                           f"\n\turl: {url}")

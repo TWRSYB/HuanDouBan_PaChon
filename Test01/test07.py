@@ -1,15 +1,14 @@
 import re
-# url = 'https://wimg.9618599.com/resources/javbus.com/631f81bd95304ec4c6a63edf/big_cover.jpg?84'
-# match_invalid_subfix = re.match(r'(.+\.jpg)\?\d+$', url)
-# if match_invalid_subfix:
-#     print(f"发现了url以jpg?xx结尾的情况: url: {url}")
-#     url = match_invalid_subfix.group(1)
-#     print(f"新的url为: {url}")
-from Config.Config import PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO
 
-chars_cant_in_filename = r'[\\/:"*?<>|]+'
-dir_studio_fanhao = f"{PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO}" \
-                    f"/{re.sub(chars_cant_in_filename, '-', '一本道*起飞')}" \
-                    f"_番号"
-
-print(dir_studio_fanhao)
+dict_movie_list = []
+with open(file=r'D:\34.Temp\06.黄豆瓣数据爬取\01.TEMP_wait\logs_阶段5_cid2/Async_error - 副本.log', mode='r', encoding='utf-8') as f:
+    lines = f.readlines()
+    for line in lines:
+        match = re.match(r'2023-08-.+movie_vo: ({.+}) res: .+', line)
+        if match:
+            dict_movie_list.append(eval(match.group(1)))
+print(dict_movie_list)
+print(len(dict_movie_list))
+for dict_movie in dict_movie_list:
+    print(dict_movie)
+    print(type(dict_movie))
