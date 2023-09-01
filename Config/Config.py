@@ -17,3 +17,5 @@ JSON_DATA_MOVIE = f"{OUTPUT_DIR}/jsondatas/movie.txt"
 JSON_DATA_ISSUER = f"{OUTPUT_DIR}/jsondatas/issuer.txt"
 JSON_DATA_DIRECTOR = f"{OUTPUT_DIR}/jsondatas/director.txt"
 JSON_DATA_MAGNET = f"{OUTPUT_DIR}/jsondatas/magnet.txt"
+
+JSON_DATA_MOVIE_DETAIL = f"{OUTPUT_DIR}/jsondatas/movie_detail_dict.json"

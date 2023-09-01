@@ -22,6 +22,8 @@ class RcdDataJson:
                       f"\n\tmsg: {msg}"
                       f"\n\t异常: {e}")
 
+
+
     def add_data_to_json_list(self, json_file, data, msg="", log=com_log):
         try:
             # 检查文件是否存在
@@ -43,6 +45,26 @@ class RcdDataJson:
                 log.info(f"json添加成功 路径: {json_file} JSON: {data} msg: {msg}")
         except Exception as e:
             log.error(f"json添加出现异常 路径: {json_file} JSON: {data} "
+                      f"\n\tmsg: {msg}"
+                      f"\n\t异常: {e}"
+                      f"{traceback.format_exc()}")
+
+    def update_dict_json(self, json_file, new_entry, msg="", log=com_log):
+        try:
+            # 如果文件存在，则读取JSON数据
+            with open(json_file, 'w+', encoding='utf-8') as f:
+
+                if f.read().strip() == "":
+                    data_dict = {}
+                else:
+                    data_dict = json.load(f)
+
+                data_dict.update(new_entry)
+                json.dump(data_dict, f, ensure_ascii=False)
+                log.info(f"更新dict_json成功 路径: {json_file} new_entry: {new_entry} msg: {msg}")
+
+        except Exception as e:
+            log.error(f"更新dict_json出现异常 路径: {json_file} new_entry: {new_entry} "
                       f"\n\tmsg: {msg}"
                       f"\n\t异常: {e}"
                       f"{traceback.format_exc()}")
@@ -142,3 +164,7 @@ class RcdDataJson:
 
 
 rcd_data_json = RcdDataJson()
+
+
+if __name__ == '__main__':
+    rcd_data_json.update_dict_json('/test.json', )

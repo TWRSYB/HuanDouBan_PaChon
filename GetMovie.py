@@ -1,6 +1,7 @@
 import re
 import concurrent.futures
 import threading
+import time
 from os import makedirs
 from typing import List, Tuple, Dict
 
@@ -9,7 +10,7 @@ from lxml import etree
 from Config import StartPoint
 from Config.Config import JSON_DATA_ISSUER, \
     JSON_DATA_DIRECTOR, PIC_DIR_MOVIE_COVER_PIC_STUDIO_FANHAO, PIC_DIR_MOVIE_GALLERY_PIC_STUDIO_FANHAO, \
-    PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO
+    PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO, JSON_DATA_MOVIE_DETAIL
 from Config.ReqConfig import URL_HOST, PAGE_PATH_MOVIE, URL_HOST_API, API_PATH_ACTOR_MOVIE
 from Dao.DirectorDao import DirectorVo, DirectorDao
 from Dao.IssuerDao import IssuerVo, IssuerDao
@@ -71,6 +72,9 @@ def get_movie_detail(movie_id, log=com_log, movie_order=0) -> MovieVo:
         # 解析 Vue js ↑↑↑
 
         print(movie_detail_dict)
+        with lock:
+            rcd_data_json.update_dict_json(json_file=JSON_DATA_MOVIE_DETAIL, new_entry={movie_id: movie_detail_dict},
+                                           log=log)
 
         # 从mdd中获取影片信息 ↓↓↓
         # id = movie_detail_dict.get('id'),
@@ -168,27 +172,11 @@ def get_movie_detail(movie_id, log=com_log, movie_order=0) -> MovieVo:
         # 导演入库 ↑↑↑
 
         # 封面图保存 ↓↓↓
-        if movie_vo.big_cove or movie_vo.small_cover:
-            dir_cover_studio = f"{PIC_DIR_MOVIE_COVER_PIC_STUDIO_FANHAO}/{filename_rm_invalid_chars(movie_vo.studio_name if movie_vo.studio_name else '_NoStudio')}"
-            makedirs(dir_cover_studio, exist_ok=True)
-            places: List[Tuple[str, str]] = [(dir_cover_studio, f"{movie_vo.studio_name}_{movie_vo.number}")]
-            if movie_vo.big_cove:
-                save_pic_util.save_pic_multi_places(url=movie_vo.big_cove, places=places, msg=f"影片封面图大, 影片: {movie_vo}",
-                                                    log=pic_log, is_async=True)
-            elif movie_vo.small_cover:
-                save_pic_util.save_pic_multi_places(url=movie_vo.small_cover, places=places,
-                                                    msg=f"影片封面图小, 影片: {movie_vo}",
-                                                    log=pic_log, is_async=True)
+        get_and_save_cover(movie_vo)
         # 封面图保存 ↑↑↑
 
         # 预告片保存 ↓↓↓
-        if trailer:
-            dir_trailer_studio = f"{PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO}/{filename_rm_invalid_chars(movie_vo.studio_name if movie_vo.studio_name else '_NoStudio')}"
-            makedirs(dir_trailer_studio, exist_ok=True)
-            places: List[Tuple[str, str]] = [(dir_trailer_studio, f"{movie_vo.studio_name}_{movie_vo.number}")]
-            if trailer:
-                save_pic_util.save_pic_multi_places(url=trailer, places=places,
-                                                    msg=f"影片预告片, 影片: {movie_vo}", log=log, is_async=True)
+        get_and_save_trailer(movie_vo)
         # 预告片保存 ↑↑↑
 
         # 预览图保存 ↓↓↓
@@ -206,7 +194,8 @@ def get_movie_detail(movie_id, log=com_log, movie_order=0) -> MovieVo:
                     places: List[Tuple[str, str]] = [
                         (dir_gallery_studio_fanhao, f"{movie_vo.number}_{str(i + 1).zfill(3)}")]
                     save_pic_util.save_pic_multi_places(url=gallery_url, places=places,
-                                                        msg=f"影片预览图, 影片: {movie_vo}", log=pic_log, is_async=True)
+                                                        msg=f"影片预览图, movie_vo: {movie_vo}, places: {places}",
+                                                        log=pic_log, is_async=True)
         # 预览图保存 ↑↑↑
 
         # 保存磁力链接 ↓↓↓
@@ -258,6 +247,30 @@ def get_movie_detail(movie_id, log=com_log, movie_order=0) -> MovieVo:
             lock.release()
 
         return movie_vo
+
+
+def get_and_save_cover(movie_vo, log=pic_log):
+    if movie_vo.big_cove or movie_vo.small_cover:
+        dir_cover_studio = f"{PIC_DIR_MOVIE_COVER_PIC_STUDIO_FANHAO}/{filename_rm_invalid_chars(movie_vo.studio_name if movie_vo.studio_name else '_NoStudio')}"
+        makedirs(dir_cover_studio, exist_ok=True)
+        places: List[Tuple[str, str]] = [(dir_cover_studio, f"{movie_vo.studio_name}_{movie_vo.number}")]
+        if movie_vo.big_cove:
+            save_pic_util.save_pic_multi_places(url=movie_vo.big_cove, places=places,
+                                                msg=f"影片封面图大, movie_vo: {movie_vo}",
+                                                log=pic_log, is_async=True)
+        elif movie_vo.small_cover:
+            save_pic_util.save_pic_multi_places(url=movie_vo.small_cover, places=places,
+                                                msg=f"影片封面图小, movie_vo: {movie_vo}",
+                                                log=pic_log, is_async=True)
+
+
+def get_and_save_trailer(movie_vo, log=pic_log):
+    if movie_vo.trailer:
+        dir_trailer_studio = f"{PIC_DIR_MOVIE_TRAILER_STUDIO_FANHAO}/{filename_rm_invalid_chars(movie_vo.studio_name if movie_vo.studio_name else '_NoStudio')}"
+        makedirs(dir_trailer_studio, exist_ok=True)
+        places: List[Tuple[str, str]] = [(dir_trailer_studio, f"{movie_vo.studio_name}_{movie_vo.number}")]
+        save_pic_util.save_pic_multi_places(url=movie_vo.trailer, places=places, timeout=200,
+                                            msg=f"影片预告片, movie_vo: {movie_vo}", log=log, is_async=True)
 
 
 def get_movie_detail_async(args):
@@ -334,7 +347,6 @@ def test_get_actor_movie():
 
 
 def test_get_movie_detail():
-
     # get_movie_detail(480766)
     影片页面_响应错误_movie_dict, 影片页面_响应错误_movie_list = read_movie_from_file(
         r'D:\34.Temp\06.黄豆瓣数据爬取\01.TEMP_wait\logs_阶段6_cid3/响应错误!!! 获取影片页面.txt', r'2023-08-.+movie_vo: ({.+}) res: .+')
@@ -364,8 +376,7 @@ def test_get_movie_detail():
 def read_movie_from_file(file_path, reg):
     dict_movie_list = []
     dict_movie_dict = {}
-    with open(file=file_path, mode='r',
-              encoding='utf-8') as f:
+    with open(file=file_path, mode='r', encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
             match = re.match(reg, line)
@@ -376,6 +387,110 @@ def read_movie_from_file(file_path, reg):
     return dict_movie_dict, dict_movie_list
 
 
+def batch_get_trailer_from_error_log():
+    movie_vo_list = []
+    movie_vo_dict = {}
+    with open(file=r'D:\34.Temp\06.黄豆瓣数据爬取\01.TEMP_wait\logs_阶段4_cid2/Async_error.log', mode='r',
+              encoding='utf-8') as f:
+        lines = f.readlines()
+        for line in lines:
+            match = re.match(r'2023-0.+出现异常!!! 第5次 msg: 影片预告片, movie_vo: ({.+})', line)
+            if not match:
+                match = re.match(r'2023-0.+响应错误!!! 第5次 msg: 影片预告片, movie_vo: ({.+})', line)
+            if match:
+                dict_movie = eval(match.group(1))
+                movie_vo = MovieVo(**dict_movie)
+
+                movie_vo_list.append(movie_vo)
+                movie_vo_dict[movie_vo.id] = movie_vo
+
+    com_log.info(f"从日志中发现的 预告片 获取失败的影片列表: {movie_vo_list}")
+    com_log.info(f"从日志中发现的 预告片 获取失败的影片列表长度: {len(movie_vo_list)}")
+    com_log.info(f"从日志中发现的 预告片 获取失败的影片列表去重后: {movie_vo_dict}")
+    com_log.info(f"从日志中发现的 预告片 获取失败的影片列表长度去重后: {len(movie_vo_dict)}")
+
+    # i = 0
+    # for key, value in movie_vo_dict.items():
+    #     print(key)
+    #     i = i + 1
+    #     LogUtil.LOG_PROCESS_MOVIE_ORDER = i
+    #     if i > 0 and i % 100 == 0:
+    #         time.sleep(100)  # 模拟耗时操作
+    #     threading.Thread(target=get_and_save_trailer, args=(value,)).start()
+    #     time.sleep(1)
+
+
+def batch_get_cover_from_error_log():
+    movie_vo_list = []
+    movie_vo_dict = {}
+    with open(file=r'D:\34.Temp\06.黄豆瓣数据爬取\01.TEMP_wait\logs_阶段4_cid2/Pic_error.log', mode='r',
+              encoding='utf-8') as f:
+        lines = f.readlines()
+        for line in lines:
+            match = re.match(r'2023-0.+出现异常!!! 第5次 msg: 影片封面图[大小], 影片: ({.+})', line)
+            if not match:
+                match = re.match(r'2023-0.+响应错误!!! 第5次 msg: 影片封面图[大小], 影片: ({.+})', line)
+            if match:
+                dict_movie = eval(match.group(1))
+                movie_vo = MovieVo(**dict_movie)
+                print(movie_vo)
+
+                movie_vo_list.append(movie_vo)
+                movie_vo_dict[movie_vo.id] = movie_vo
+
+    com_log.info(f"从日志中发现的 影片封面图 获取失败的影片列表: {movie_vo_list}")
+    com_log.info(f"从日志中发现的 影片封面图 获取失败的影片列表长度: {len(movie_vo_list)}")
+    com_log.info(f"从日志中发现的 影片封面图 获取失败的影片列表去重后: {movie_vo_dict}")
+    com_log.info(f"从日志中发现的 影片封面图 获取失败的影片列表长度去重后: {len(movie_vo_dict)}")
+    # i = 0
+    # for key, value in movie_vo_dict.items():
+    #     print(key)
+    #     i = i + 1
+    #     LogUtil.LOG_PROCESS_MOVIE_ORDER = i
+    #     if i > 0 and i % 100 == 0:
+    #         time.sleep(100)  # 模拟耗时操作
+    #     threading.Thread(target=get_and_save_cover, args=(value,)).start()
+    #     time.sleep(1)
+
+
+def batch_get_movie_from_error_log():
+    movie_id_list = []
+    movie_id_set = set()
+    with open(file=r'D:\34.Temp\06.黄豆瓣数据爬取\01.TEMP_wait\logs_阶段4_cid2/Async_error.log', mode='r',
+              encoding='utf-8') as f:
+        lines = f.readlines()
+        for line in lines:
+            match = re.match(r'2023-0.+响应错误!!! 第5次 msg: 获取影片页面.+movie_id: (.+) res:', line)
+            if not match:
+                match = re.match(r'2023-0.+出现异常!!! 第5次 msg: 获取影片页面, movie_vo: ({.+})', line)
+            if match:
+                movie_id = match.group(1)
+
+                movie_id_list.append(movie_id)
+                movie_id_set.add(movie_id)
+    com_log.info(f"从日志中发现的 影片页面 获取失败的影片列表: {movie_id_list}")
+    com_log.info(f"从日志中发现的 影片页面 获取失败的影片列表长度: {len(movie_id_list)}")
+    com_log.info(f"从日志中发现的 影片页面 获取失败的影片列表去重后: {movie_id_set}")
+    com_log.info(f"从日志中发现的 影片页面 获取失败的影片列表长度去重后: {len(movie_id_set)}")
+    i = 0
+    for movie_id in movie_id_set:
+        print(movie_id)
+        i = i + 1
+        LogUtil.LOG_PROCESS_MOVIE_ORDER = i
+        if i > 0 and i % 100 == 0:
+            time.sleep(100)  # 模拟耗时操作
+        threading.Thread(target=get_movie_detail, args=(movie_id, async_log, i)).start()
+        time.sleep(1)
+
+
 if __name__ == '__main__':
+    start_time = time.time()
     # test_get_actor_movie()
-    test_get_movie_detail()
+    # test_get_movie_detail()
+    # batch_get_trailer_from_error_log()
+    batch_get_movie_from_error_log()
+    # batch_get_cover_from_error_log()
+    end_time = time.time()
+    duration = end_time - start_time
+    duration_minutes = duration / 60
+    print("程序持续时间：", duration_minutes, "分钟")
